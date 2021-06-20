@@ -1,0 +1,21 @@
+[package]
+name = "poll"
+version = "0.1.0"
+authors = ["Vo Le Tung <15053897+letung3105@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+dotenv = "0.15"
+uuid = { version = "0.6", features = ["serde", "v4"] } # gotta be v0.6 since serde uses v0.6
+
+actix = "0.12"
+actix-web = "3"
+
+diesel = { version = "1", features = ["sqlite", "r2d2", "uuid"] }
+diesel_migrations = "1"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
