@@ -6,14 +6,40 @@
 </head>
 
 <body>
-    <p>Making decisions easily!</p>
-	{{#if hasOption}}
-		<h1>Next item</h1>
-		<h2>{{option.title}}</h2>
-		<p>{{option.content}}</p>
-	{{else}}
-		<h1>No decision :(</h1>
-	{{/if}}
+    <h1>Making decisions easily!</h1>
+
+	<div class="container__bestItem">
+		<h2>Next item</h2>
+		{{#if best_item}}
+			<h3>{{best_item.title}}</h3>
+			<p>{{best_item.content}}</p>
+		{{else}}
+			<h3>Nothing :(</h3>
+		{{/if}}
+	</div>
+
+	<form method="POST" action="/ballots">
+		<button type="submit">Give your opinion</button>
+	</form>
+	<form method="PUT" action="/votes/id_form">
+		<button type="submit">Change opinion</button>
+		<input type="text" placeholder="Previously given unique id"/>
+	</form>
+
+	<hr/>
+	<br/>
+
+	<h2>List of items</h2>
+	<div class="container__undoneItems">
+		<ul>
+		{{#each undone_items}}
+			<li>
+				<h3>{{title}}</h3>
+				<p>{{content}}</p>
+			</li>
+		{{/each}}
+		</ul>
+	</div>
 </div>
 </body>
 </html>

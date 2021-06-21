@@ -15,7 +15,8 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
             items.title as item_title,
             items.content as item_content,
             items.done as item_done
-        FROM votes NATURAL JOIN items WHERE NOT items.done 
+        FROM votes INNER JOIN items ON votes.item_id = items.id
+        WHERE NOT items.done 
         ORDER BY votes.user_id ASC, votes.ord ASC;
         "#
     )
@@ -53,4 +54,15 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
         PollResult::Winner(winner) => Some(winner.clone()),
     };
     Ok(best_item)
+}
+
+pub(crate) async fn get_all_undone_items(pool: &SqlitePool) -> crate::Result<Vec<Item>> {
+    // Query for items sorted by user id and vote order
+    let items = query_as!(
+        Item,
+        r#"SELECT  * FROM items WHERE NOT items.done"#
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(items)
 }

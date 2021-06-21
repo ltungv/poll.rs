@@ -2,15 +2,20 @@
 extern crate serde_json;
 #[macro_use]
 extern crate sqlx;
+#[macro_use]
+extern crate futures;
 
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use handlebars::Handlebars;
+use serde::Serialize;
 use sqlx::SqlitePool;
 
 mod actions;
 mod error;
 mod irv;
 mod models;
+
+use models::Item;
 
 pub(crate) type Result<T> = std::result::Result<T, error::Error>;
 
@@ -41,16 +46,25 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Serialize)]
+struct IndexContext {
+    best_item: Option<Item>,
+    undone_items: Vec<Item>,
+}
+
 #[get("/")]
 async fn index(
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    let handlebars_data = match actions::get_poll_result(&db_pool).await? {
-        None => json!({ "hasOption": false }),
-        Some(best_option) => json!({ "hasOption": true, "option": best_option }),
+    let (best_item, undone_items) = join!(
+        actions::get_poll_result(&db_pool),
+        actions::get_all_undone_items(&db_pool)
+    );
+    let context = IndexContext {
+        best_item: best_item?,
+        undone_items: undone_items?,
     };
-
-    let body = hd_.render("index", &handlebars_data)?;
+    let body = hd_.render("index", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
