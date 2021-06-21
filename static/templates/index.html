@@ -9,15 +9,10 @@
 		{{/if}}
 	</div>
 
-	<form method="POST" action="/ballot">
-		<button type="submit">Give your ballot</button>
+	<form method="POST" action="/ballot/get">
+		<input type="text" name="uuid" placeholder="A unique id"/>
+		<button type="submit">Cast your ballot</button>
 	</form>
-	<form method="GET" action="/ballot">
-		<button type="submit">Change your ballot</button>
-		<input type="text" placeholder="Previously given unique id"/>
-	</form>
-
-	{{>items_list items=undone_items}}
 {{/inline}}
 
 {{>layout}}

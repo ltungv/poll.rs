@@ -6,11 +6,11 @@ use crate::{
 };
 
 pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>> {
-    // Query for items sorted by user id and vote order
+    // Query for items sorted by ballot id and ranking order
     let records = query!(
         r#"
         SELECT 
-            rankings.ballot_id as ballot_id,
+            rankings.ballot_id,
             items.id as item_id,
             items.title as item_title,
             items.content as item_content,
@@ -23,32 +23,28 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
     .fetch_all(pool)
     .await?;
 
-    // Group votes by user id
-    let mut votes = Vec::new();
-    let mut current_ballot_votes = Vec::new();
+    let mut ballots = vec![Vec::new()];
+    let mut current_ballot = 0;
     let mut last_ballot_id = None;
     for record in records {
-        if let Some(n) = last_ballot_id {
-            if n != record.ballot_id {
-                votes.push(current_ballot_votes);
-                current_ballot_votes = Vec::new();
+        if let Some(ballot_id) = last_ballot_id {
+            if ballot_id != record.ballot_id {
+                ballots.push(Vec::new());
+                current_ballot += 1;
             }
         }
         last_ballot_id = Some(record.ballot_id);
-        current_ballot_votes.push(Item {
+        ballots[current_ballot].push(Item {
             id: record.item_id,
             title: record.item_title,
             content: record.item_content,
             done: record.item_done,
         });
     }
-    if last_ballot_id.is_some() {
-        votes.push(current_ballot_votes);
-    }
 
     // Get poll result
-    let votes: Vec<_> = votes.iter().map(|v| v.as_slice()).collect();
-    let best_item = match run_instant_runoff_voting(&votes) {
+    let ballots: Vec<_> = ballots.iter().map(|v| v.as_slice()).collect();
+    let best_item = match run_instant_runoff_voting(&ballots) {
         PollResult::NoWinner => None,
         PollResult::Tied(winners) => Some(winners[0].clone()),
         PollResult::Winner(winner) => Some(winner.clone()),
@@ -62,4 +58,38 @@ pub(crate) async fn get_all_undone_items(pool: &SqlitePool) -> crate::Result<Vec
         .fetch_all(pool)
         .await?;
     Ok(items)
+}
+
+pub(crate) async fn get_ballot_items_status(
+    pool: &SqlitePool,
+    uuid: String,
+) -> crate::Result<(Vec<Item>, Vec<Item>)> {
+    let (ranked_items, unranked_items) = join!(
+        query_as!(
+            Item,
+            r#"
+            SELECT items.id, items.title, items.content, items.done
+            FROM rankings 
+                INNER JOIN items ON rankings.item_id = items.id
+                INNER JOIN ballots ON rankings.ballot_id = ballots.id
+            WHERE NOT items.done AND ballots.uuid = ?
+            ORDER BY rankings.ord ASC;
+        "#,
+            uuid
+        )
+        .fetch_all(pool),
+        query_as!(
+            Item,
+            r#"
+            SELECT items.id, items.title, items.content, items.done
+            FROM items 
+            WHERE items.id NOT IN (
+                SELECT item_id FROM rankings INNER JOIN ballots WHERE ballots.uuid = ?
+            )
+        "#,
+            uuid
+        )
+        .fetch_all(pool)
+    );
+    Ok((ranked_items?, unranked_items?))
 }

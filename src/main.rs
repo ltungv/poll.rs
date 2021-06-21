@@ -3,9 +3,9 @@ extern crate sqlx;
 #[macro_use]
 extern crate futures;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer};
+use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
 use handlebars::Handlebars;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
 mod actions;
@@ -33,10 +33,10 @@ async fn main() -> Result<()> {
     println!("Starting server at: {}", DEFAULT_SERVER_SOCK_ADDR);
     HttpServer::new(move || {
         App::new()
+            .wrap(middleware::Logger::default())
             .data(db_pool.clone())
             .data(hd_.clone())
             .service(index)
-            .service(ballot_create)
             .service(ballot_retrieve)
     })
     .bind(DEFAULT_SERVER_SOCK_ADDR)?
@@ -70,24 +70,28 @@ async fn index(
 }
 
 #[derive(Serialize)]
-struct BallotContext {}
-
-#[get("/ballot")]
-async fn ballot_retrieve(
-    db_pool: web::Data<SqlitePool>,
-    hd_: web::Data<Handlebars<'_>>,
-) -> Result<HttpResponse> {
-    let context = BallotContext {};
-    let body = hd_.render("ballot", &context)?;
-    Ok(HttpResponse::Ok().body(body))
+struct BallotContext {
+    ranked_items: Vec<Item>,
+    unranked_items: Vec<Item>,
 }
 
-#[post("/ballot")]
-async fn ballot_create(
+#[derive(Deserialize)]
+struct GetBallotForm {
+    uuid: String,
+}
+
+#[post("/ballot/get")]
+async fn ballot_retrieve(
+    form: web::Form<GetBallotForm>,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    let context = BallotContext {};
+    let (ranked_items, unranked_items) =
+        actions::get_ballot_items_status(&db_pool, form.uuid.clone()).await?;
+    let context = BallotContext {
+        ranked_items,
+        unranked_items,
+    };
     let body = hd_.render("ballot", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
