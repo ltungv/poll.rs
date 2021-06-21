@@ -1,14 +1,14 @@
 {{#*inline "content"}}
 
-<div id="container__list">
-	<div id="list__ballot-undone-items" class="list-group">
+<div>
+	<div id="ballot-rankings-container" class="list-group">
 	{{#each ranked_items}}
 		<div class="list-group-item">
 			<h3>{{title}}</h3>
 			<p>{{content}}</p>
 		</div>
 	{{/each}}
-	<div><hr/></div>
+	<div class="list-group-item"><hr/></div>
 	{{#each unranked_items}}
 		<div class="list-group-item">
 			<h3>{{title}}</h3>
@@ -24,7 +24,7 @@
 </script>
 <script>
 	Sortable.create(
-		document.getElementById('list__ballot-undone-items'), 
+		document.getElementById('ballot-rankings-container'), 
 		{});
 </script>
 
