@@ -1,9 +1,33 @@
 {{#*inline "content"}}
-	<h2>Ranked</h2>
-	{{>items_list items=ranked_items}}
-	<hr/>
-	<h2>Unranked</h2>
-	{{>items_list items=unranked_items}}
+
+<div id="container__list">
+	<div id="list__ballot-undone-items" class="list-group">
+	{{#each ranked_items}}
+		<div class="list-group-item">
+			<h3>{{title}}</h3>
+			<p>{{content}}</p>
+		</div>
+	{{/each}}
+	<div><hr/></div>
+	{{#each unranked_items}}
+		<div class="list-group-item">
+			<h3>{{title}}</h3>
+			<p>{{content}}</p>
+		</div>
+	{{/each}}
+	</div>
+</div>
+
+<!-- jsDelivr:: Sortable :: Latest
+	(https://www.jsdelivr.com/package/npm/sortablejs) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js">
+</script>
+<script>
+	Sortable.create(
+		document.getElementById('list__ballot-undone-items'), 
+		{});
+</script>
+
 {{/inline}}
 
 {{>layout}}
