@@ -3,7 +3,7 @@ extern crate sqlx;
 #[macro_use]
 extern crate futures;
 
-use actix_web::{get, web, App, HttpResponse, HttpServer};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer};
 use handlebars::Handlebars;
 use serde::Serialize;
 use sqlx::SqlitePool;
@@ -36,6 +36,8 @@ async fn main() -> Result<()> {
             .data(db_pool.clone())
             .data(hd_.clone())
             .service(index)
+            .service(ballot_create)
+            .service(ballot_retrieve)
     })
     .bind(DEFAULT_SERVER_SOCK_ADDR)?
     .run()
@@ -67,3 +69,25 @@ async fn index(
     Ok(HttpResponse::Ok().body(body))
 }
 
+#[derive(Serialize)]
+struct BallotContext {}
+
+#[get("/ballot")]
+async fn ballot_retrieve(
+    db_pool: web::Data<SqlitePool>,
+    hd_: web::Data<Handlebars<'_>>,
+) -> Result<HttpResponse> {
+    let context = BallotContext {};
+    let body = hd_.render("ballot", &context)?;
+    Ok(HttpResponse::Ok().body(body))
+}
+
+#[post("/ballot")]
+async fn ballot_create(
+    db_pool: web::Data<SqlitePool>,
+    hd_: web::Data<Handlebars<'_>>,
+) -> Result<HttpResponse> {
+    let context = BallotContext {};
+    let body = hd_.render("ballot", &context)?;
+    Ok(HttpResponse::Ok().body(body))
+}

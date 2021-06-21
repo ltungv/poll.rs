@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-    <title>Poll.rs</title>
-</head>
-
-<body>
-    <h1>Making decisions easily!</h1>
-
+{{#*inline "content"}}
 	<div class="container__bestItem">
 		<h2>Next item</h2>
 		{{#if best_item}}
@@ -18,28 +9,15 @@
 		{{/if}}
 	</div>
 
-	<form method="POST" action="/ballots">
-		<button type="submit">Give your opinion</button>
+	<form method="POST" action="/ballot">
+		<button type="submit">Give your ballot</button>
 	</form>
-	<form method="PUT" action="/votes/id_form">
-		<button type="submit">Change opinion</button>
+	<form method="GET" action="/ballot">
+		<button type="submit">Change your ballot</button>
 		<input type="text" placeholder="Previously given unique id"/>
 	</form>
 
-	<hr/>
-	<br/>
+	{{>items_list items=undone_items}}
+{{/inline}}
 
-	<h2>List of items</h2>
-	<div class="container__undoneItems">
-		<ul>
-		{{#each undone_items}}
-			<li>
-				<h3>{{title}}</h3>
-				<p>{{content}}</p>
-			</li>
-		{{/each}}
-		</ul>
-	</div>
-</div>
-</body>
-</html>
+{{>layout}}
