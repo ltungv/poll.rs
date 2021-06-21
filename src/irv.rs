@@ -67,7 +67,7 @@ where
 
         // Only one option received the majority of votes
         if best_options.len() == 1 {
-            break PollResult::Winner(best_options.first().unwrap());
+            break PollResult::Winner(best_options[0]);
         }
         // Tied when votes are evenly distributed
         if max_count == min_count {
