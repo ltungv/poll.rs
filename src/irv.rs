@@ -17,63 +17,63 @@ pub enum PollResult<'a, T> {
     Winner(&'a T),
 }
 
-/// Determine the best option(s) using the instant-runoff voting system. This function does not
+/// Determine the best item(s) using the instant-runoff voting system. This function does not
 /// guarantee the winner to be the one receives the majority votes.
-pub fn run_instant_runoff_voting<'a, T>(votes: &'a [&'a [T]]) -> PollResult<'a, T>
+pub fn run_instant_runoff_voting<'a, T>(ballots: &'a [&'a [T]]) -> PollResult<'a, T>
 where
     T: 'a + Eq + Hash,
 {
-    let mut eliminated_options: HashSet<&T> = HashSet::new();
+    let mut eliminated_items: HashSet<&T> = HashSet::new();
     loop {
-        // Count votes
-        let mut votes_count: HashMap<&T, u32> = HashMap::new();
-        for &vote in votes {
+        // Count ballots
+        let mut ballots_count: HashMap<&T, u32> = HashMap::new();
+        for &vote in ballots {
             for opt in vote {
-                if !eliminated_options.contains(opt) {
-                    let count = votes_count.entry(opt).or_insert(0);
+                if !eliminated_items.contains(opt) {
+                    let count = ballots_count.entry(opt).or_insert(0);
                     *count += 1;
                     break;
                 }
             }
         }
         // There is no vote
-        if votes_count.is_empty() {
+        if ballots_count.is_empty() {
             break PollResult::NoWinner;
         }
 
-        // Get options with most number of votes and options with least number of votes
+        // Get items with most number of ballots and items with least number of ballots
         let mut max_count = u32::MIN;
         let mut min_count = u32::MAX;
-        let mut best_options = Vec::new();
-        let mut worst_options = Vec::new();
-        for (&k, &v) in votes_count.iter() {
+        let mut best_items = Vec::new();
+        let mut worst_items = Vec::new();
+        for (&k, &v) in ballots_count.iter() {
             if v > max_count {
-                best_options.clear();
+                best_items.clear();
                 max_count = v;
             }
             if v >= max_count {
-                best_options.push(k);
+                best_items.push(k);
             }
             if v < min_count {
-                worst_options.clear();
+                worst_items.clear();
                 min_count = v;
             }
             if v <= min_count {
-                worst_options.push(k);
+                worst_items.push(k);
             }
         }
 
-        // Only one option received the majority of votes
-        if best_options.len() == 1 {
-            break PollResult::Winner(best_options[0]);
+        // Only one item received the majority of ballots
+        if best_items.len() == 1 {
+            break PollResult::Winner(best_items[0]);
         }
-        // Tied when votes are evenly distributed
+        // Tied when ballots are evenly distributed
         if max_count == min_count {
-            break PollResult::Tied(best_options);
+            break PollResult::Tied(best_items);
         }
 
-        for opt in worst_options {
-            eliminated_options.insert(opt);
+        for opt in worst_items {
+            eliminated_items.insert(opt);
         }
     }
 }
