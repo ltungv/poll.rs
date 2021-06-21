@@ -5,7 +5,7 @@ use crate::{
     models::Item,
 };
 
-pub(crate) async fn get_poll_result(pool: &SqlitePool) -> anyhow::Result<Option<Item>> {
+pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>> {
     // Query for items sorted by user id and vote order
     let records = query!(
         r#"
@@ -48,9 +48,9 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> anyhow::Result<Option<
     // Get poll result
     let votes: Vec<_> = votes.iter().map(|v| v.as_slice()).collect();
     let best_item = match run_instant_runoff_voting(&votes) {
+        PollResult::NoWinner => None,
         PollResult::Tied(winners) => Some(winners[0].clone()),
         PollResult::Winner(winner) => Some(winner.clone()),
-        PollResult::NoWinner => None,
     };
     Ok(best_item)
 }

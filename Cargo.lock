@@ -227,12 +227,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.41"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15af2628f6890fe2609a3b91bef4c83450512802e59489f9c1cb1fa5df064a61"
-
-[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,12 +1233,12 @@ name = "poll"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "anyhow",
  "dotenv",
  "handlebars",
  "serde",
  "serde_json",
  "sqlx",
+ "thiserror",
 ]
 
 [[package]]
