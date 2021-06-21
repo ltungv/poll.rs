@@ -7,5 +7,13 @@
 
 <body>
     <p>Making decisions easily!</p>
+	{{#if hasWinner}}
+		<h1>Next item</h1>
+		<h2>{{wonOption.title}}</h2>
+		<p>{{wonOption.content}}</p>
+	{{else}}
+		<h1>No decision :(</h1>
+	{{/if}}
+</div>
 </body>
 </html>
