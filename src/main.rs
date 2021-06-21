@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate serde_json;
-#[macro_use]
 extern crate sqlx;
 #[macro_use]
 extern crate futures;
@@ -68,3 +66,4 @@ async fn index(
     let body = hd_.render("index", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
+

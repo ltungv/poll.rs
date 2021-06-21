@@ -22,8 +22,6 @@ pub enum PollResult<'a, T> {
 pub fn run_instant_runoff_voting<'a, T>(votes: &'a [&'a [T]]) -> PollResult<'a, T>
 where
     T: 'a + Eq + Hash,
-    // &'a VoteIter: IntoIterator<Item = &'a OptionIter>,
-    // &'a OptionIter: 'a + IntoIterator<Item = &'a T>,
 {
     let mut eliminated_options: HashSet<&T> = HashSet::new();
     loop {

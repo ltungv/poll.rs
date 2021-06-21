@@ -1,8 +1,8 @@
-CREATE TABLE users (
+CREATE TABLE ballots (
 	id INTEGER NOT NULL PRIMARY KEY,
-	username TEXT NOT NULL UNIQUE
+	uuid TEXT NOT NULL UNIQUE
 );
-CREATE UNIQUE INDEX uname ON users(username);
+CREATE UNIQUE INDEX uniq_ballot ON ballots(uuid);
 
 CREATE TABLE items (
 	id INTEGER NOT NULL PRIMARY KEY,
@@ -11,14 +11,14 @@ CREATE TABLE items (
 	done BOOLEAN NOT NULL DEFAULT 'f'
 );
 
-CREATE TABLE votes (
+CREATE TABLE rankings (
 	id INTEGER NOT NULL PRIMARY KEY,
-	user_id INTEGER NOT NULL,
+	ballot_id INTEGER NOT NULL,
 	item_id INTEGER NOT NULL,
 	ord INTEGER NOT NULL,
 
-	FOREIGN KEY (user_id) REFERENCES users(id)
+	FOREIGN KEY (ballot_id) REFERENCES ballots(id)
 	FOREIGN KEY (item_id) REFERENCES items(id)
 );
-CREATE INDEX poll ON votes(user_id ASC, ord ASC);
-CREATE UNIQUE INDEX uniq_vote ON votes(user_id, item_id);
+CREATE INDEX ballot_item_one_to_one ON rankings(ballot_id ASC, item_id ASC);
+CREATE UNIQUE INDEX uniq_rankings ON rankings(ballot_id, item_id);

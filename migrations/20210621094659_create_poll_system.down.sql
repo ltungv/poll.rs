@@ -1,5 +1,6 @@
-DROP TABLE users;
+DROP TABLE rankings;
 
-DROP TABLE options;
+DROP TABLE ballots;
 
-DROP TABLE votes;
+DROP TABLE items;
+

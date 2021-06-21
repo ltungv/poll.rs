@@ -10,14 +10,14 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
     let records = query!(
         r#"
         SELECT 
-            votes.user_id as user_id,
+            rankings.ballot_id as ballot_id,
             items.id as item_id,
             items.title as item_title,
             items.content as item_content,
             items.done as item_done
-        FROM votes INNER JOIN items ON votes.item_id = items.id
+        FROM rankings INNER JOIN items ON rankings.item_id = items.id
         WHERE NOT items.done 
-        ORDER BY votes.user_id ASC, votes.ord ASC;
+        ORDER BY rankings.ballot_id ASC, rankings.ord ASC;
         "#
     )
     .fetch_all(pool)
@@ -25,25 +25,25 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
 
     // Group votes by user id
     let mut votes = Vec::new();
-    let mut current_user_votes = Vec::new();
-    let mut last_user_id = None;
+    let mut current_ballot_votes = Vec::new();
+    let mut last_ballot_id = None;
     for record in records {
-        if let Some(n) = last_user_id {
-            if n != record.user_id {
-                votes.push(current_user_votes);
-                current_user_votes = Vec::new();
+        if let Some(n) = last_ballot_id {
+            if n != record.ballot_id {
+                votes.push(current_ballot_votes);
+                current_ballot_votes = Vec::new();
             }
         }
-        last_user_id = Some(record.user_id);
-        current_user_votes.push(Item {
+        last_ballot_id = Some(record.ballot_id);
+        current_ballot_votes.push(Item {
             id: record.item_id,
             title: record.item_title,
             content: record.item_content,
             done: record.item_done,
         });
     }
-    if last_user_id.is_some() {
-        votes.push(current_user_votes);
+    if last_ballot_id.is_some() {
+        votes.push(current_ballot_votes);
     }
 
     // Get poll result
@@ -58,11 +58,8 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
 
 pub(crate) async fn get_all_undone_items(pool: &SqlitePool) -> crate::Result<Vec<Item>> {
     // Query for items sorted by user id and vote order
-    let items = query_as!(
-        Item,
-        r#"SELECT  * FROM items WHERE NOT items.done"#
-    )
-    .fetch_all(pool)
-    .await?;
+    let items = query_as!(Item, r#"SELECT  * FROM items WHERE NOT items.done"#)
+        .fetch_all(pool)
+        .await?;
     Ok(items)
 }
