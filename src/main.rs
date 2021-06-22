@@ -70,20 +70,20 @@ async fn index(
     Ok(HttpResponse::Ok().body(body))
 }
 
+#[derive(Deserialize)]
+struct BallotQuery {
+    uuid: String,
+}
+
 #[derive(Serialize)]
 struct BallotContext {
     ranked_items: Vec<Item>,
     unranked_items: Vec<Item>,
 }
 
-#[derive(Deserialize)]
-struct BallotAccessForm {
-    uuid: String,
-}
-
-#[post("/forms/access_ballot")]
+#[get("/ballot")]
 async fn access_ballot(
-    form: web::Form<BallotAccessForm>,
+    form: web::Query<BallotQuery>,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
@@ -98,16 +98,16 @@ async fn access_ballot(
 }
 
 #[derive(Deserialize)]
-struct BallotCastRequest {
+struct CastedBallot {
     ranked_item_ids: Vec<i64>,
 }
 
 #[post("/ballot")]
 async fn cast_ballot(
-    ballot_cast_req: web::Json<BallotCastRequest>,
+    ballot: web::Json<CastedBallot>,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    println!("{:?}", ballot_cast_req.ranked_item_ids);
+    println!("{:?}", ballot.ranked_item_ids);
     Ok(HttpResponse::Ok().finish())
 }
