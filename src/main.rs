@@ -5,7 +5,7 @@ extern crate futures;
 
 use std::time::Duration;
 
-use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_identity::{CookieIdentityPolicy, Identity, IdentityService};
 use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     let db_url = std::env::var("DATABASE_URL")?;
     let db_pool = SqlitePool::connect(&db_url).await?;
 
-    // Identity service policty 
+    // Identity service policty
     let identity_cookie_secret = std::env::var("IDENTITY_COOKIE_SECRET")?;
     let identity_policy = CookieIdentityPolicy::new(identity_cookie_secret.as_bytes())
         .name(IDENTITY_COOKIE_NAME)
@@ -95,6 +95,15 @@ struct BallotQuery {
 struct BallotContext {
     ranked_items: Vec<Item>,
     unranked_items: Vec<Item>,
+}
+
+#[post("/login")]
+async fn login(
+    query: web::Query<BallotQuery>,
+    id: Identity,
+    db_pool: web::Data<SqlitePool>,
+    hd_: web::Data<Handlebars<'_>>,
+) {
 }
 
 #[get("/ballot")]
