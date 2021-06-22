@@ -9,14 +9,3 @@ pub(crate) struct Item {
     pub(crate) done: bool,
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct NewBallot {
-    pub(crate) uuid: String,
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct NewRanking {
-    pub(crate) ballot_id: i64,
-    pub(crate) item_id: i64,
-    pub(crate) ord: i64,
-}

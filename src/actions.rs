@@ -2,10 +2,10 @@ use sqlx::{query, SqlitePool};
 
 use crate::{
     irv::{run_instant_runoff_voting, PollResult},
-    models::Item,
+    models,
 };
 
-pub(crate) async fn poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>> {
+pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<models::Item>> {
     // Query for items sorted by ballot id and ranking order
     let records = query!(
         r#"
@@ -34,7 +34,7 @@ pub(crate) async fn poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>
             }
         }
         last_ballot_id = Some(record.ballot_id);
-        ballots[current_ballot].push(Item {
+        ballots[current_ballot].push(models::Item {
             id: record.item_id,
             title: record.item_title,
             content: record.item_content,
@@ -52,21 +52,20 @@ pub(crate) async fn poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>
     Ok(best_item)
 }
 
-pub(crate) async fn all_undone_items(pool: &SqlitePool) -> crate::Result<Vec<Item>> {
-    // Query for items sorted by user id and vote order
-    let items = query_as!(Item, r#"SELECT  * FROM items WHERE NOT items.done"#)
-        .fetch_all(pool)
+pub(crate) async fn get_ballot_id(pool: &SqlitePool, uuid: &str) -> crate::Result<Option<i64>> {
+    let record = query!("SELECT id FROM ballots WHERE ballots.uuid = ?", uuid)
+        .fetch_optional(pool)
         .await?;
-    Ok(items)
+    Ok(record.map(|r| r.id))
 }
 
-pub(crate) async fn ballot_rankings(
+pub(crate) async fn get_ballot_rankings(
     pool: &SqlitePool,
     ballot_id: i64,
-) -> crate::Result<(Vec<Item>, Vec<Item>)> {
+) -> crate::Result<(Vec<models::Item>, Vec<models::Item>)> {
     let (ranked_items, unranked_items) = try_join!(
         query_as!(
-            Item,
+            models::Item,
             r#"
             SELECT items.id, items.title, items.content, items.done
             FROM rankings 
@@ -78,7 +77,7 @@ pub(crate) async fn ballot_rankings(
         )
         .fetch_all(pool),
         query_as!(
-            Item,
+            models::Item,
             r#"
             SELECT items.id, items.title, items.content, items.done
             FROM items 
@@ -103,12 +102,6 @@ pub(crate) async fn new_ballot(pool: &SqlitePool, uuid: &str) -> crate::Result<(
     Ok(())
 }
 
-pub(crate) async fn ballot_id(pool: &SqlitePool, uuid: &str) -> crate::Result<Option<i64>> {
-    let record = query!("SELECT id FROM ballots WHERE ballots.uuid = ?", uuid)
-        .fetch_optional(pool)
-        .await?;
-    Ok(record.map(|r| r.id))
-}
 
 pub(crate) async fn new_ballot_rankings(
     pool: &SqlitePool,

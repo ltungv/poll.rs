@@ -15,8 +15,6 @@ mod error;
 mod irv;
 mod models;
 
-use models::Item;
-
 pub(crate) type Result<T> = std::result::Result<T, error::Error>;
 
 const DEFAULT_SERVER_SOCK_ADDR: &str = "127.0.0.1:8080";
@@ -55,8 +53,7 @@ async fn main() -> Result<()> {
 
 #[derive(Serialize)]
 struct IndexContext {
-    best_item: Option<Item>,
-    undone_items: Vec<Item>,
+    best_item: Option<models::Item>,
 }
 
 #[get("/")]
@@ -64,14 +61,8 @@ async fn index(
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    let (best_item, undone_items) = join!(
-        actions::poll_result(&db_pool),
-        actions::all_undone_items(&db_pool)
-    );
-    let context = IndexContext {
-        best_item: best_item?,
-        undone_items: undone_items?,
-    };
+    let best_item = actions::get_poll_result(&db_pool).await?;
+    let context = IndexContext { best_item };
     let body = hd_.render("index", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
@@ -99,8 +90,8 @@ async fn login(
 
 #[derive(Serialize)]
 struct BallotContext {
-    ranked_items: Vec<Item>,
-    unranked_items: Vec<Item>,
+    ranked_items: Vec<models::Item>,
+    unranked_items: Vec<models::Item>,
 }
 
 #[get("/ballot")]
@@ -109,25 +100,24 @@ async fn access_ballot(
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    match request.cookie(IDENTITY_COOKIE_NAME) {
-        None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
-        Some(cookie) => {
-            let uuid = cookie.value();
-            match actions::ballot_id(&db_pool, uuid).await? {
-                None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
-                Some(id) => {
-                    let (ranked_items, unranked_items) =
-                        actions::ballot_rankings(&db_pool, id).await?;
-                    let context = BallotContext {
-                        ranked_items,
-                        unranked_items,
-                    };
-                    let body = hd_.render("ballot", &context)?;
-                    Ok(HttpResponse::Ok().body(body))
-                }
-            }
-        }
-    }
+    let cookie = match request.cookie(IDENTITY_COOKIE_NAME) {
+        Some(c) => c,
+        None => return Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+    };
+
+    let uuid = cookie.value();
+    let ballot_id = match actions::get_ballot_id(&db_pool, uuid).await? {
+        Some(id) => id,
+        None => return Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+    };
+
+    let (ranked_items, unranked_items) = actions::get_ballot_rankings(&db_pool, ballot_id).await?;
+    let context = BallotContext {
+        ranked_items,
+        unranked_items,
+    };
+    let body = hd_.render("ballot", &context)?;
+    Ok(HttpResponse::Ok().body(body))
 }
 
 #[derive(Deserialize)]
@@ -141,18 +131,17 @@ async fn cast_ballot(
     ballot: web::Json<CastedBallot>,
     db_pool: web::Data<SqlitePool>,
 ) -> Result<HttpResponse> {
-    match request.cookie(IDENTITY_COOKIE_NAME) {
-        None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
-        Some(cookie) => {
-            let uuid = cookie.value();
-            match actions::ballot_id(&db_pool, uuid).await? {
-                None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
-                Some(ballot_id) => {
-                    actions::new_ballot_rankings(&db_pool, ballot_id, &ballot.ranked_item_ids)
-                        .await?;
-                    Ok(HttpResponse::Accepted().finish())
-                }
-            }
-        }
-    }
+    let cookie = match request.cookie(IDENTITY_COOKIE_NAME) {
+        Some(c) => c,
+        None => return Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+    };
+
+    let uuid = cookie.value();
+    let ballot_id = match actions::get_ballot_id(&db_pool, uuid).await? {
+        Some(id) => id,
+        None => return Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+    };
+
+    actions::new_ballot_rankings(&db_pool, ballot_id, &ballot.ranked_item_ids).await?;
+    Ok(HttpResponse::Accepted().finish())
 }
