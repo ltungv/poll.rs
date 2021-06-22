@@ -37,7 +37,8 @@ async fn main() -> Result<()> {
             .data(db_pool.clone())
             .data(hd_.clone())
             .service(index)
-            .service(ballot_retrieve)
+            .service(access_ballot)
+            .service(cast_ballot)
     })
     .bind(DEFAULT_SERVER_SOCK_ADDR)?
     .run()
@@ -76,13 +77,13 @@ struct BallotContext {
 }
 
 #[derive(Deserialize)]
-struct GetBallotForm {
+struct BallotAccessForm {
     uuid: String,
 }
 
-#[post("/ballot/get")]
-async fn ballot_retrieve(
-    form: web::Form<GetBallotForm>,
+#[post("/forms/access_ballot")]
+async fn access_ballot(
+    form: web::Form<BallotAccessForm>,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
@@ -94,4 +95,19 @@ async fn ballot_retrieve(
     };
     let body = hd_.render("ballot", &context)?;
     Ok(HttpResponse::Ok().body(body))
+}
+
+#[derive(Deserialize)]
+struct BallotCastRequest {
+    ranked_item_ids: Vec<i64>,
+}
+
+#[post("/ballot")]
+async fn cast_ballot(
+    ballot_cast_req: web::Json<BallotCastRequest>,
+    db_pool: web::Data<SqlitePool>,
+    hd_: web::Data<Handlebars<'_>>,
+) -> Result<HttpResponse> {
+    println!("{:?}", ballot_cast_req.ranked_item_ids);
+    Ok(HttpResponse::Ok().finish())
 }

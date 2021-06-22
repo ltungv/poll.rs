@@ -1,18 +1,20 @@
 {{#*inline "content"}}
-	<div>
-		<h2>Next item</h2>
-		{{#if best_item}}
-			<h3>{{best_item.title}}</h3>
-			<p>{{best_item.content}}</p>
-		{{else}}
-			<h3>Nothing :(</h3>
-		{{/if}}
-	</div>
+<div>
+	<h2>Next item</h2>
 
-	<form method="POST" action="/ballot/get">
-		<input type="text" name="uuid" placeholder="A unique id"/>
-		<button type="submit">Cast your ballot</button>
-	</form>
+	{{#if best_item}}
+	<h3>{{best_item.title}}</h3>
+	<p>{{best_item.content}}</p>
+
+	{{else}}
+	<h3>Nothing :(</h3>
+	{{/if}}
+</div>
+
+<form method="POST" action="/forms/access_ballot">
+	<input type="text" name="uuid" placeholder="A unique id"/>
+	<button type="submit">Cast your ballot</button>
+</form>
 {{/inline}}
 
 {{>layout}}

@@ -9,13 +9,15 @@
 		content="A site for creating instant-runoff voting poll">
     <meta name="viewport" 
 		content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	{{>metas}}
+	{{>stylesheets}}
 </head>
 
 <body>
     <h1>Making decisions easily!</h1>
-	<div>
-		{{>content}}
-	</div>
+	<div>{{>content}}</div>
 </body>
+
+{{>scripts}}
 
 </html>
