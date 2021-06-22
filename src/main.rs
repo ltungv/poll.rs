@@ -3,6 +3,9 @@ extern crate sqlx;
 #[macro_use]
 extern crate futures;
 
+use std::time::Duration;
+
+use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
@@ -19,6 +22,10 @@ pub(crate) type Result<T> = std::result::Result<T, error::Error>;
 
 const DEFAULT_SERVER_SOCK_ADDR: &str = "127.0.0.1:8080";
 
+const IDENTITY_COOKIE_NAME: &str = "ballot-uuid";
+
+const IDENTITY_SESSION_DURATION: Duration = Duration::from_secs(14 * 7 * 24 * 60 * 60);
+
 #[actix_web::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -27,15 +34,24 @@ async fn main() -> Result<()> {
     let mut hd_ = Handlebars::new();
     hd_.register_templates_directory(".html", "static/templates")?;
 
+    // Sqlite database connection pool
     let db_url = std::env::var("DATABASE_URL")?;
     let db_pool = SqlitePool::connect(&db_url).await?;
+
+    // Identity service policty 
+    let identity_cookie_secret = std::env::var("IDENTITY_COOKIE_SECRET")?;
+    let identity_policy = CookieIdentityPolicy::new(identity_cookie_secret.as_bytes())
+        .name(IDENTITY_COOKIE_NAME)
+        .max_age(IDENTITY_SESSION_DURATION)
+        .visit_deadline(IDENTITY_SESSION_DURATION);
 
     println!("Starting server at: {}", DEFAULT_SERVER_SOCK_ADDR);
     HttpServer::new(move || {
         App::new()
-            .wrap(middleware::Logger::default())
             .data(db_pool.clone())
             .data(hd_.clone())
+            .wrap(middleware::Logger::default())
+            .wrap(IdentityService::new(identity_policy))
             .service(index)
             .service(access_ballot)
             .service(cast_ballot)
