@@ -58,9 +58,21 @@ struct IndexContext {
 
 #[get("/")]
 async fn index(
+    request: web::HttpRequest,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
+    let cookie = request.cookie(IDENTITY_COOKIE_NAME);
+    if cookie.is_some()
+        && actions::get_ballot_id(&db_pool, cookie.unwrap().value())
+            .await?
+            .is_some()
+    {
+        return Ok(HttpResponse::Found()
+            .insert_header((header::LOCATION, "/ballot"))
+            .finish());
+    }
+
     let best_item = actions::get_poll_result(&db_pool).await?;
     let context = IndexContext { best_item };
     let body = hd_.render("index", &context)?;
@@ -90,6 +102,7 @@ async fn login(
 
 #[derive(Serialize)]
 struct BallotContext {
+    best_item: Option<models::Item>,
     ranked_items: Vec<models::Item>,
     unranked_items: Vec<models::Item>,
 }
@@ -111,8 +124,13 @@ async fn access_ballot(
         None => return Ok(HttpResponse::Unauthorized().body("Unauthorized")),
     };
 
-    let (ranked_items, unranked_items) = actions::get_ballot_rankings(&db_pool, ballot_id).await?;
+    let (best_item, (ranked_items, unranked_items)) = try_join!(
+        actions::get_poll_result(&db_pool),
+        actions::get_ballot_rankings(&db_pool, ballot_id)
+    )?;
+
     let context = BallotContext {
+        best_item,
         ranked_items,
         unranked_items,
     };
