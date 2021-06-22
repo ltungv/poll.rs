@@ -1,11 +1,11 @@
-use sqlx::SqlitePool;
+use sqlx::{query, SqlitePool};
 
 use crate::{
     irv::{run_instant_runoff_voting, PollResult},
     models::Item,
 };
 
-pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>> {
+pub(crate) async fn poll_result(pool: &SqlitePool) -> crate::Result<Option<Item>> {
     // Query for items sorted by ballot id and ranking order
     let records = query!(
         r#"
@@ -17,7 +17,7 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
             items.done as item_done
         FROM rankings INNER JOIN items ON rankings.item_id = items.id
         WHERE NOT items.done 
-        ORDER BY rankings.ballot_id ASC, rankings.ord ASC;
+        ORDER BY rankings.ballot_id ASC, rankings.ord ASC
         "#
     )
     .fetch_all(pool)
@@ -52,7 +52,7 @@ pub(crate) async fn get_poll_result(pool: &SqlitePool) -> crate::Result<Option<I
     Ok(best_item)
 }
 
-pub(crate) async fn get_all_undone_items(pool: &SqlitePool) -> crate::Result<Vec<Item>> {
+pub(crate) async fn all_undone_items(pool: &SqlitePool) -> crate::Result<Vec<Item>> {
     // Query for items sorted by user id and vote order
     let items = query_as!(Item, r#"SELECT  * FROM items WHERE NOT items.done"#)
         .fetch_all(pool)
@@ -60,22 +60,21 @@ pub(crate) async fn get_all_undone_items(pool: &SqlitePool) -> crate::Result<Vec
     Ok(items)
 }
 
-pub(crate) async fn get_ballot_items_status(
+pub(crate) async fn ballot_rankings(
     pool: &SqlitePool,
-    uuid: String,
+    ballot_id: i64,
 ) -> crate::Result<(Vec<Item>, Vec<Item>)> {
-    let (ranked_items, unranked_items) = join!(
+    let (ranked_items, unranked_items) = try_join!(
         query_as!(
             Item,
             r#"
             SELECT items.id, items.title, items.content, items.done
             FROM rankings 
                 INNER JOIN items ON rankings.item_id = items.id
-                INNER JOIN ballots ON rankings.ballot_id = ballots.id
-            WHERE NOT items.done AND ballots.uuid = ?
+            WHERE NOT items.done AND rankings.ballot_id = ?
             ORDER BY rankings.ord ASC;
-        "#,
-            uuid
+            "#,
+            ballot_id
         )
         .fetch_all(pool),
         query_as!(
@@ -84,12 +83,65 @@ pub(crate) async fn get_ballot_items_status(
             SELECT items.id, items.title, items.content, items.done
             FROM items 
             WHERE items.id NOT IN (
-                SELECT item_id FROM rankings INNER JOIN ballots WHERE ballots.uuid = ?
+                SELECT item_id FROM rankings WHERE rankings.ballot_id = ?
             )
-        "#,
-            uuid
+            "#,
+            ballot_id
         )
         .fetch_all(pool)
-    );
-    Ok((ranked_items?, unranked_items?))
+    )?;
+    Ok((ranked_items, unranked_items))
+}
+
+pub(crate) async fn new_ballot(pool: &SqlitePool, uuid: &str) -> crate::Result<()> {
+    query!(
+        "INSERT INTO ballots(uuid) VALUES (?) ON CONFLICT (uuid) DO NOTHING",
+        uuid
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+pub(crate) async fn ballot_id(pool: &SqlitePool, uuid: &str) -> crate::Result<Option<i64>> {
+    let record = query!("SELECT id FROM ballots WHERE ballots.uuid = ?", uuid)
+        .fetch_optional(pool)
+        .await?;
+    Ok(record.map(|r| r.id))
+}
+
+pub(crate) async fn new_ballot_rankings(
+    pool: &SqlitePool,
+    ballot_id: i64,
+    ranked_item_ids: &[i64],
+) -> crate::Result<()> {
+    // Since there's no bulk insert option, we are building the query by appending strings
+    let mut insert_query = String::from("INSERT INTO rankings(ballot_id, item_id, ord) VALUES");
+    for (ord, item_id) in ranked_item_ids.iter().enumerate() {
+        if ord != 0 {
+            insert_query += ",";
+        }
+        insert_query += format!("({}, {}, {})", ballot_id, item_id, ord).as_str();
+    }
+    insert_query += ";";
+
+    let mut tx = pool.begin().await?;
+    // Remove all rankings
+    query!(
+        r#"
+        DELETE FROM rankings
+        WHERE rankings.ballot_id 
+        IN (SELECT id FROM ballots WHERE ballots.id = ?)
+        "#,
+        ballot_id,
+    )
+    .execute(&mut tx)
+    .await?;
+    // Insert new rankings
+    if !ranked_item_ids.is_empty() {
+        query(&insert_query).execute(&mut tx).await?;
+    }
+    tx.commit().await?;
+
+    Ok(())
 }

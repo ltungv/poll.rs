@@ -3,10 +3,9 @@ extern crate sqlx;
 #[macro_use]
 extern crate futures;
 
-use std::time::Duration;
-
-use actix_identity::{CookieIdentityPolicy, Identity, IdentityService};
-use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
+use actix_web::{
+    cookie::Cookie, get, http::header, middleware, post, web, App, HttpResponse, HttpServer,
+};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
@@ -24,8 +23,6 @@ const DEFAULT_SERVER_SOCK_ADDR: &str = "127.0.0.1:8080";
 
 const IDENTITY_COOKIE_NAME: &str = "ballot-uuid";
 
-const IDENTITY_SESSION_DURATION: Duration = Duration::from_secs(14 * 7 * 24 * 60 * 60);
-
 #[actix_web::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
@@ -38,21 +35,14 @@ async fn main() -> Result<()> {
     let db_url = std::env::var("DATABASE_URL")?;
     let db_pool = SqlitePool::connect(&db_url).await?;
 
-    // Identity service policty
-    let identity_cookie_secret = std::env::var("IDENTITY_COOKIE_SECRET")?;
-    let identity_policy = CookieIdentityPolicy::new(identity_cookie_secret.as_bytes())
-        .name(IDENTITY_COOKIE_NAME)
-        .max_age(IDENTITY_SESSION_DURATION)
-        .visit_deadline(IDENTITY_SESSION_DURATION);
-
     println!("Starting server at: {}", DEFAULT_SERVER_SOCK_ADDR);
     HttpServer::new(move || {
         App::new()
             .data(db_pool.clone())
             .data(hd_.clone())
             .wrap(middleware::Logger::default())
-            .wrap(IdentityService::new(identity_policy))
             .service(index)
+            .service(login)
             .service(access_ballot)
             .service(cast_ballot)
     })
@@ -75,8 +65,8 @@ async fn index(
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
     let (best_item, undone_items) = join!(
-        actions::get_poll_result(&db_pool),
-        actions::get_all_undone_items(&db_pool)
+        actions::poll_result(&db_pool),
+        actions::all_undone_items(&db_pool)
     );
     let context = IndexContext {
         best_item: best_item?,
@@ -87,8 +77,24 @@ async fn index(
 }
 
 #[derive(Deserialize)]
-struct BallotQuery {
+struct LoginQuery {
     uuid: String,
+}
+
+#[post("/login")]
+async fn login(
+    query: web::Form<LoginQuery>,
+    db_pool: web::Data<SqlitePool>,
+) -> Result<HttpResponse> {
+    if query.uuid.is_empty() {
+        return Ok(HttpResponse::BadRequest().body("Bad request"));
+    }
+    actions::new_ballot(&db_pool, &query.uuid).await?;
+    let cookie = Cookie::new(IDENTITY_COOKIE_NAME, &query.uuid);
+    Ok(HttpResponse::Found()
+        .insert_header((header::LOCATION, "/ballot"))
+        .cookie(cookie)
+        .finish())
 }
 
 #[derive(Serialize)]
@@ -97,29 +103,31 @@ struct BallotContext {
     unranked_items: Vec<Item>,
 }
 
-#[post("/login")]
-async fn login(
-    query: web::Query<BallotQuery>,
-    id: Identity,
-    db_pool: web::Data<SqlitePool>,
-    hd_: web::Data<Handlebars<'_>>,
-) {
-}
-
 #[get("/ballot")]
 async fn access_ballot(
-    form: web::Query<BallotQuery>,
+    request: web::HttpRequest,
     db_pool: web::Data<SqlitePool>,
     hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    let (ranked_items, unranked_items) =
-        actions::get_ballot_items_status(&db_pool, form.uuid.clone()).await?;
-    let context = BallotContext {
-        ranked_items,
-        unranked_items,
-    };
-    let body = hd_.render("ballot", &context)?;
-    Ok(HttpResponse::Ok().body(body))
+    match request.cookie(IDENTITY_COOKIE_NAME) {
+        None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+        Some(cookie) => {
+            let uuid = cookie.value();
+            match actions::ballot_id(&db_pool, uuid).await? {
+                None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+                Some(id) => {
+                    let (ranked_items, unranked_items) =
+                        actions::ballot_rankings(&db_pool, id).await?;
+                    let context = BallotContext {
+                        ranked_items,
+                        unranked_items,
+                    };
+                    let body = hd_.render("ballot", &context)?;
+                    Ok(HttpResponse::Ok().body(body))
+                }
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -129,10 +137,22 @@ struct CastedBallot {
 
 #[post("/ballot")]
 async fn cast_ballot(
+    request: web::HttpRequest,
     ballot: web::Json<CastedBallot>,
     db_pool: web::Data<SqlitePool>,
-    hd_: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
-    println!("{:?}", ballot.ranked_item_ids);
-    Ok(HttpResponse::Ok().finish())
+    match request.cookie(IDENTITY_COOKIE_NAME) {
+        None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+        Some(cookie) => {
+            let uuid = cookie.value();
+            match actions::ballot_id(&db_pool, uuid).await? {
+                None => Ok(HttpResponse::Unauthorized().body("Unauthorized")),
+                Some(ballot_id) => {
+                    actions::new_ballot_rankings(&db_pool, ballot_id, &ballot.ranked_item_ids)
+                        .await?;
+                    Ok(HttpResponse::Accepted().finish())
+                }
+            }
+        }
+    }
 }
