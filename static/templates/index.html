@@ -1,20 +1,19 @@
 {{#*inline "content"}}
-<div>
-	<div>
-		<h2>Next item</h2>
-		{{#if best_item}}
-		<h3>{{best_item.title}}</h3>
-		<p>{{best_item.content}}</p>
-		{{else}}
-		<h3>Nothing :(</h3>
-		{{/if}}
-	</div>
+<section class="section">
+	<p class="title">This is our current best option</p>
+	{{>best_item item=best_item}}
 
 	<form method="POST" action="/login">
-		<input type="text" name="uuid" placeholder="A unique id"/>
-		<button type="submit">Cast your ballot</button>
+		<div class="field is-grouped">
+			<div class="control">
+				<input class="input" name="uuid" type="text" placeholder="A unique id"/>
+			</div>
+			<div class="control">
+				<button class="button is-link" type="submit">Cast your ballot</button>
+			</div>
+    </div>
 	</form>
-</div>
+</section>
 {{/inline}}
 
 {{>layout}}

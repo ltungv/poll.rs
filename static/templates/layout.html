@@ -2,20 +2,23 @@
 <html>
 
 <head>
-    <title>Poll.rs</title>
+  <title>Poll.rs</title>
+
+	<link rel="stylesheet" 
+		href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+	{{>stylesheets}}
+
 	<meta charset="utf-8">
 	<meta name="author" content="Vo Le Tung">
-	<meta name="description" 
-		content="A site for creating instant-runoff voting poll">
-    <meta name="viewport" 
-		content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description"
+    content="A site for creating instant-runoff voting poll">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	{{>metas}}
-	{{>stylesheets}}
 </head>
 
 <body>
-    <h1>Making decisions easily!</h1>
-	<div>{{>content}}</div>
+	{{>content}}
 </body>
 
 {{>scripts}}

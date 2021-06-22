@@ -1,35 +1,43 @@
+{{#*inline "stylesheets"}}
+<style>
+	#ballot-ranked-unranked-delim {
+		background-color: #AAAAAA;
+	}
+
+	#ballot-ranked-unranked-delim ~ .list-group-item {
+		background-color: #AAAAAA;
+	}
+</style>
+{{/inline}}
+
 {{#*inline "content"}}
-<div>
-	<div>
-		<h2>Next item</h2>
-		{{#if best_item}}
-		<h3>{{best_item.title}}</h3>
-		<p>{{best_item.content}}</p>
-		{{else}}
-		<h3>Nothing :(</h3>
-		{{/if}}
-	</div>
+<section class="section">
+	<p class="title">This is our current best option</p>
+  {{>best_item item=best_item}}
 
-	<ul id="ballot-rankings-container" class="list-group">
-		{{#each ranked_items}}
-		<li data-id="{{id}}"class="list-group-item">
-			<p><b>{{title}}</b></p>
-			<p>{{content}}</p>
-		</li>
-		{{/each}}
+	<p class="title mt-6">Your rankings</p>
+  <div id="ballot-rankings-container" class="list-group">
+    {{#each ranked_items}}
+    <div data-id="{{id}}" class="list-group-item box mt-1 mb-1">
+      <p class="title">{{title}}</p>
+      <p class="subtitle">{{content}}</p>
+    </div>
+    {{/each}}
 
-		<li data-id="delimiter" id="ballot-ranked-unranked-delim">
-			<hr size="8"/>
-		</li>
+    <div data-id="delimiter" 
+      id="ballot-ranked-unranked-delim" 
+      class="box mt-1 mb-1">
+      <p class="subtitle">ITEMS BELOW THIS IS NOT RANKED</p>
+    </div>
 
-		{{#each unranked_items}}
-		<li data-id="{{id}}"class="list-group-item">
-			<p><b>{{title}}</b></p>
-			<p>{{content}}</p>
-		</li>
-		{{/each}}
-	</ul>
-</div>
+    {{#each unranked_items}}
+    <div data-id="{{id}}" class="list-group-item box mt-1 mb-1">
+      <p class="title">{{title}}</p>
+      <p class="subtitle">{{content}}</p>
+    </div>
+    {{/each}}
+  </div>
+</section>
 {{/inline}}
 
 {{#*inline "scripts"}}
@@ -58,27 +66,6 @@ let sortable_item_ids = Sortable.create(
 		},
 	});
 </script>
-{{/inline}}
-
-{{#*inline "stylesheets"}}
-<style>
-	#ballot-rankings-container {
-		padding: 0;
-	}
-
-	#ballot-rankings-container li {
-		list-style: none;
-	}
-
-	#ballot-ranked-unranked-delim hr {
-		color: black;
-		background-color: black;
-	}
-
-	#ballot-ranked-unranked-delim ~ .list-group-item {
-		background-color: grey;
-	}
-</style>
 {{/inline}}
 
 {{>layout}}
