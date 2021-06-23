@@ -102,7 +102,6 @@ pub(crate) async fn new_ballot(pool: &SqlitePool, uuid: &str) -> crate::Result<(
     Ok(())
 }
 
-
 pub(crate) async fn new_ballot_rankings(
     pool: &SqlitePool,
     ballot_id: i64,

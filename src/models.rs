@@ -1,5 +1,5 @@
-use sqlx::FromRow;
 use serde::Serialize;
+use sqlx::FromRow;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, FromRow, Serialize)]
 pub(crate) struct Item {
@@ -8,4 +8,3 @@ pub(crate) struct Item {
     pub(crate) content: String,
     pub(crate) done: bool,
 }
-
