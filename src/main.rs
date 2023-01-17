@@ -4,7 +4,12 @@ extern crate sqlx;
 extern crate futures;
 
 use actix_web::{
-    cookie::Cookie, get, http::header, middleware, post, web, App, HttpResponse, HttpServer,
+    cookie::Cookie,
+    get,
+    http::header,
+    middleware, post,
+    web::{self, Data},
+    App, HttpRequest, HttpResponse, HttpServer,
 };
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
@@ -26,8 +31,8 @@ async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
     // Handlebars template engine
-    let mut hd_ = Handlebars::new();
-    hd_.register_templates_directory(".html", "static/templates")?;
+    let mut handlebars_engine = Handlebars::new();
+    handlebars_engine.register_templates_directory(".html", "static/templates")?;
 
     // Sqlite database connection pool
     let db_url = std::env::var("DATABASE_URL")?;
@@ -36,8 +41,8 @@ async fn main() -> Result<()> {
     println!("Starting server at: {}", DEFAULT_SERVER_SOCK_ADDR);
     HttpServer::new(move || {
         App::new()
-            .data(db_pool.clone())
-            .data(hd_.clone())
+            .app_data(Data::new(db_pool.clone()))
+            .app_data(Data::new(handlebars_engine.clone()))
             .wrap(middleware::Logger::default())
             .service(index)
             .service(login)
@@ -58,9 +63,9 @@ struct IndexContext {
 
 #[get("/")]
 async fn index(
-    request: web::HttpRequest,
+    request: HttpRequest,
     db_pool: web::Data<SqlitePool>,
-    hd_: web::Data<Handlebars<'_>>,
+    handlebars_engine: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
     let cookie = request.cookie(IDENTITY_COOKIE_NAME);
     if cookie.is_some()
@@ -75,7 +80,7 @@ async fn index(
 
     let best_item = actions::get_poll_result(&db_pool).await?;
     let context = IndexContext { best_item };
-    let body = hd_.render("index", &context)?;
+    let body = handlebars_engine.render("index", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
 
@@ -109,9 +114,9 @@ struct BallotContext {
 
 #[get("/ballot")]
 async fn access_ballot(
-    request: web::HttpRequest,
+    request: HttpRequest,
     db_pool: web::Data<SqlitePool>,
-    hd_: web::Data<Handlebars<'_>>,
+    handlebars_engine: web::Data<Handlebars<'_>>,
 ) -> Result<HttpResponse> {
     let cookie = match request.cookie(IDENTITY_COOKIE_NAME) {
         Some(c) => c,
@@ -134,7 +139,7 @@ async fn access_ballot(
         ranked_items,
         unranked_items,
     };
-    let body = hd_.render("ballot", &context)?;
+    let body = handlebars_engine.render("ballot", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
 
@@ -145,7 +150,7 @@ struct CastedBallot {
 
 #[post("/ballot")]
 async fn cast_ballot(
-    request: web::HttpRequest,
+    request: HttpRequest,
     ballot: web::Json<CastedBallot>,
     db_pool: web::Data<SqlitePool>,
 ) -> Result<HttpResponse> {
