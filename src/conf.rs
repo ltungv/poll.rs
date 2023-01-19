@@ -148,6 +148,7 @@ impl DatabaseConfiguration {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct TracingConfiguration {
     service_name: String,
+    jaeger_enabled: bool,
     jaeger_endpoint: String,
     log_level: String,
 }
@@ -155,6 +156,10 @@ pub struct TracingConfiguration {
 impl TracingConfiguration {
     pub fn service_name(&self) -> &str {
         &self.service_name
+    }
+
+    pub fn jaeger_enabled(&self) -> bool {
+        self.jaeger_enabled
     }
 
     pub fn jaeger_endpoint(&self) -> &str {

@@ -28,7 +28,7 @@ pub fn setup_tracing(config: &Configuration) -> Result<(), anyhow::Error> {
                 std::io::stdout,
             ))
             .with(
-                tracing_opentelemetry::layer().with_tracer(
+                tracing_opentelemetry::layer().with_tracer(if tracing_config.jaeger_enabled() {
                     // TODO: get settings from configuration file
                     opentelemetry_jaeger::new_agent_pipeline()
                         .with_endpoint(tracing_config.jaeger_endpoint())
@@ -43,8 +43,10 @@ pub fn setup_tracing(config: &Configuration) -> Result<(), anyhow::Error> {
                                 .with_max_events_per_span(64)
                                 .with_max_attributes_per_span(16),
                         )
-                        .install_batch(opentelemetry::runtime::Tokio)?,
-                ),
+                        .install_batch(opentelemetry::runtime::Tokio)?
+                } else {
+                    opentelemetry_jaeger::new_agent_pipeline().install_simple()?
+                }),
             ),
     )?)
 }

@@ -12,5 +12,6 @@ database:
   require_ssl: false
 tracing:
   service_name: poll
+  jaeger_enabled: true
   jaeger_endpoint: localhost:6831
   log_level: INFO
