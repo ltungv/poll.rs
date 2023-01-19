@@ -23,15 +23,15 @@ method.
 
 ```
 insert into items(title, content) values
-	("Title 1", "This is not very interesting"),
-	("Title 2", "This is somewhat inteteresting"),
-	("Title 3", "This is very interesting");
+	('Title 1', 'This is not very interesting'),
+	('Title 2', 'This is somewhat inteteresting'),
+	('Title 3', 'This is very interesting');
 insert into ballots(uuid) values
-	("testing-value-1"),
-	("testing-value-2"),
-	("testing-value-3"),
-	("testing-value-4"),
-	("testing-value-5");
+	(gen_random_uuid()),
+	(gen_random_uuid()),
+	(gen_random_uuid()),
+	(gen_random_uuid()),
+	(gen_random_uuid());
 insert into rankings(ballot_id,item_id,ord) values
 	(1,1,0),
 	(1,2,1),
