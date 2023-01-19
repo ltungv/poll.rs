@@ -4,11 +4,11 @@ name: poll
 region: sgp
 
 services:
-  - name: poll
+  - name: poll-web-service
     dockerfile_path: Dockerfile
     source_dir: .
     github:
-      branch: main
+      branch: master
       deploy_on_push: true
       repo: letung3105/poll.rs
     health_check:
@@ -21,24 +21,24 @@ services:
       - path: /
     envs:
       - key: POLL__DATABASE__HOST
-        value: ${poll.HOSTNAME}
+        value: ${poll-database-postgres.HOSTNAME}
         scope: RUN_TIME
       - key: POLL__DATABASE__PORT
-        value: ${poll.PORT}
+        value: ${poll-database-postgres.PORT}
         scope: RUN_TIME
       - key: POLL__DATABASE__USERNAME
-        value: ${poll.USERNAME}
+        value: ${poll-database-postgres.USERNAME}
         scope: RUN_TIME
       - key: POLL__DATABASE__PASSWORD
-        value: ${poll.PASSWORD}
+        value: ${poll-database-postgres.PASSWORD}
         scope: RUN_TIME
       - key: POLL__DATABASE__DATABASE
-        value: ${poll.DATABASE}
+        value: ${poll-database-postgres.DATABASE}
         scope: RUN_TIME
 
 databases:
-  - engine: pg
-    name: poll
+  - engine: PG
+    name: poll-database-postgres
     num_nodes: 1
     size: db-s-dev-database
-    version: "14"
+    version: "12"
