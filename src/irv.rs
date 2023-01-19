@@ -1,25 +1,23 @@
-//! Simple implementation of an instant-runoff voting system
-
-#![warn(missing_docs)]
-
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
 };
 
 /// Result of a poll
-pub enum PollResult<'a, T> {
+pub enum InstantRunoffVotingResult<'a, T> {
     /// Could not finish the poll
     NoWinner,
+
     /// The poll results in multiple winners
     Tied(Vec<&'a T>),
+
     /// The poll results in one winner
     Winner(&'a T),
 }
 
 /// Determine the best item(s) using the instant-runoff voting system. This function does not
 /// guarantee the winner to be the one receives the majority votes.
-pub fn run_instant_runoff_voting<'a, T>(ballots: &'a [&'a [T]]) -> PollResult<'a, T>
+pub fn instant_runoff_vote<'a, T>(ballots: &'a [&'a [T]]) -> InstantRunoffVotingResult<'a, T>
 where
     T: 'a + Eq + Hash,
 {
@@ -38,7 +36,7 @@ where
         }
         // There is no vote
         if ballots_count.is_empty() {
-            break PollResult::NoWinner;
+            break InstantRunoffVotingResult::NoWinner;
         }
 
         // Get items with most number of ballots and items with least number of ballots
@@ -65,11 +63,11 @@ where
 
         // Only one item received the majority of ballots
         if best_items.len() == 1 {
-            break PollResult::Winner(best_items[0]);
+            break InstantRunoffVotingResult::Winner(best_items[0]);
         }
         // Tied when ballots are evenly distributed
         if max_count == min_count {
-            break PollResult::Tied(best_items);
+            break InstantRunoffVotingResult::Tied(best_items);
         }
 
         for opt in worst_items {
@@ -97,10 +95,10 @@ mod tests {
             vote_d.as_slice(),
             vote_e.as_slice(),
         ];
-        match run_instant_runoff_voting(&votes) {
-            PollResult::NoWinner => unreachable!(),
-            PollResult::Tied(_) => unreachable!(),
-            PollResult::Winner(winner) => assert_eq!(winner, &"sue"),
+        match instant_runoff_vote(&votes) {
+            InstantRunoffVotingResult::NoWinner => unreachable!(),
+            InstantRunoffVotingResult::Tied(_) => unreachable!(),
+            InstantRunoffVotingResult::Winner(winner) => assert_eq!(winner, &"sue"),
         };
     }
 
@@ -110,10 +108,10 @@ mod tests {
         let vote_b = vec!["sue"];
 
         let votes = vec![vote_a.as_slice(), vote_b.as_slice()];
-        match run_instant_runoff_voting(&votes) {
-            PollResult::NoWinner => unreachable!(),
-            PollResult::Winner(_) => unreachable!(),
-            PollResult::Tied(options) => {
+        match instant_runoff_vote(&votes) {
+            InstantRunoffVotingResult::NoWinner => unreachable!(),
+            InstantRunoffVotingResult::Winner(_) => unreachable!(),
+            InstantRunoffVotingResult::Tied(options) => {
                 assert!(options.contains(&&"sue"));
                 assert!(options.contains(&&"bob"));
             }
@@ -126,10 +124,10 @@ mod tests {
         let vote_b = vec!["sue", "bob"];
 
         let votes = vec![vote_a.as_slice(), vote_b.as_slice()];
-        match run_instant_runoff_voting(&votes) {
-            PollResult::NoWinner => unreachable!(),
-            PollResult::Winner(_) => unreachable!(),
-            PollResult::Tied(options) => {
+        match instant_runoff_vote(&votes) {
+            InstantRunoffVotingResult::NoWinner => unreachable!(),
+            InstantRunoffVotingResult::Winner(_) => unreachable!(),
+            InstantRunoffVotingResult::Tied(options) => {
                 assert!(options.contains(&&"sue"));
                 assert!(options.contains(&&"bob"));
             }
@@ -139,10 +137,10 @@ mod tests {
     #[test]
     fn irv_no_vote() {
         let votes: Vec<&[&str]> = vec![];
-        match run_instant_runoff_voting(&votes) {
-            PollResult::Tied(_) => unreachable!(),
-            PollResult::Winner(_) => unreachable!(),
-            PollResult::NoWinner => {}
+        match instant_runoff_vote(&votes) {
+            InstantRunoffVotingResult::Tied(_) => unreachable!(),
+            InstantRunoffVotingResult::Winner(_) => unreachable!(),
+            InstantRunoffVotingResult::NoWinner => {}
         };
     }
 }

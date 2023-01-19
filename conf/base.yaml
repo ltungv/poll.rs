@@ -1,0 +1,16 @@
+application:
+  port: 8000
+  host: 0.0.0.0
+  template_directory: static/template
+  template_file_extension: .html
+database:
+  host: 127.0.0.1
+  port: 5432
+  username: admin
+  password: admin
+  database: poll
+  require_ssl: false
+tracing:
+  service_name: poll
+  jaeger_endpoint: localhost:6831
+  log_level: INFO

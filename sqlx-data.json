@@ -1,0 +1,203 @@
+{
+  "db": "PostgreSQL",
+  "044bd7cbc10ddb31c45be2f917a5e5436ae5360a04a582fd1418af1dea8d15e1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "uuid",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM ballots WHERE uuid = $1"
+  },
+  "17c4d96454af8c05de1e552911e58ecdeba7c367340dee1a5f2798e7c1616cbf": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "ord",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "item_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "item_title",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "item_content",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "item_done",
+          "ordinal": 5,
+          "type_info": "Bool"
+        },
+        {
+          "name": "ballot_id",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "ballot_uuid",
+          "ordinal": 7,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT\n                rankings.id as id,\n                rankings.ord as ord,\n                items.id as item_id,\n                items.title as item_title,\n                items.content as item_content,\n                items.done as item_done,\n                ballots.id as ballot_id,\n                ballots.uuid as ballot_uuid\n            FROM rankings\n            INNER JOIN items ON rankings.item_id = items.id\n            INNER JOIN ballots ON rankings.ballot_id = ballots.id\n            WHERE NOT items.done\n            ORDER BY rankings.ballot_id ASC, rankings.ord ASC;\n            "
+  },
+  "22e1499d1b2e131fe66a983367c40f862f40a076ae23f93945be303023cbb6a5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "done",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items INNER JOIN rankings ON items.id = rankings.item_id\n            WHERE NOT items.done AND rankings.ballot_id = $1 \n            ORDER BY rankings.ord ASC;\n            "
+  },
+  "2e45863a33819a3a5bbc3dbd7ebcdb53bf41f983dadd90d58b77b504dbad6fc6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO ballots(uuid) VALUES ($1);"
+  },
+  "56bb81f8df4395c28c648170e9bf5d3d260be8a4ae39d9f6cbe6c6e2ed244350": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "done",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items LEFT JOIN rankings ON items.id = rankings.item_id AND rankings.ballot_id = $1\n            WHERE NOT items.done AND rankings.ballot_id IS NULL\n            ORDER BY rankings.ord ASC;\n            "
+  },
+  "5d3ba32227ac747839c82e31bf9f58b008cfed897e23f0b97f996425b6267844": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO RANKINGS(ord, item_id, ballot_id) VALUES ($1, $2, $3)"
+  },
+  "d88e1c332bc300cea5c9d2d5d60519e3ddc5822836ccaadf29cb9a1de1a4a509": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "DELETE FROM rankings WHERE rankings.ballot_id = $1;"
+  }
+}
