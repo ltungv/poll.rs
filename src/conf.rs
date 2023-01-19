@@ -1,9 +1,10 @@
-use secrecy::{ExposeSecret, Secret};
 use std::{
     io,
     path::{Path, PathBuf},
 };
 
+use secrecy::{ExposeSecret, Secret};
+use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
     PgPool,
@@ -88,6 +89,7 @@ impl Configuration {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct ApplicationConfiguration {
     host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
     template_directory: PathBuf,
     template_file_extension: String,
@@ -111,6 +113,7 @@ impl ApplicationConfiguration {
 pub struct DatabaseConfiguration {
     require_ssl: bool,
     host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
     username: String,
     password: Secret<String>,

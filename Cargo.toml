@@ -15,6 +15,7 @@ opentelemetry = { version = "0.18", features = ["rt-tokio"] }
 opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"] }
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
+serde-aux = "4"
 serde_json = "1"
 sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "postgres", "macros", "migrate", "offline", "uuid"] }
 thiserror = "1"
