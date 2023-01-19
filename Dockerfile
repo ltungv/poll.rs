@@ -58,6 +58,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
 COPY --from=builder /poll/target/release/poll poll
 COPY --from=builder /poll/conf conf
+COPY --from=builder /poll/static static
 ENV POLL_RUN_MODE production
 USER poll:poll
 ENTRYPOINT ["./poll"]
