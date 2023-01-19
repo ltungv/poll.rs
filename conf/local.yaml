@@ -1,0 +1,4 @@
+database:
+  require_ssl: false
+tracing:
+  jaeger_enabled: true
