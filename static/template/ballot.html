@@ -15,7 +15,7 @@
 	<p class="title">This is our current best option</p>
   {{>best_item item=best_item}}
 
-	<p class="title mt-6">Your rankings</p>
+	<p class="title mt-6">Your rankings ({{uuid}})</p>
   <div id="ballot-rankings-container" class="list-group">
     {{#each ranked_items}}
     <div data-id="{{id}}" class="list-group-item box mt-1 mb-1">

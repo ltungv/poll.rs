@@ -1,10 +1,10 @@
 use actix_web::{web, HttpRequest, HttpResponse};
-use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use tracing::log::{log, Level};
 use uuid::Uuid;
 
 use crate::{
+    app::ApplicationContext,
     model::item::Item,
     service::{BallotService, ItemService, RankingService},
 };
@@ -13,6 +13,7 @@ use super::{RouteError, IDENTITY_COOKIE_NAME};
 
 #[derive(Serialize)]
 struct BallotViewContext {
+    uuid: Uuid,
     best_item: Option<Item>,
     ranked_items: Vec<Item>,
     unranked_items: Vec<Item>,
@@ -20,10 +21,7 @@ struct BallotViewContext {
 
 pub async fn get<IS, BS, RS>(
     request: HttpRequest,
-    handlebars_engine: web::Data<Handlebars<'_>>,
-    item_service: web::Data<IS>,
-    ballot_service: web::Data<BS>,
-    ranking_service: web::Data<RS>,
+    app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
 where
     IS: ItemService,
@@ -43,22 +41,23 @@ where
         }
     };
 
-    let ballot = match ballot_service.login(uuid).await? {
+    let ballot = match app_ctx.ballot_service().login(uuid).await? {
         Some(id) => id,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
 
     let (best_item, (ranked_items, unranked_items)) = futures::try_join!(
-        ranking_service.get_instant_runoff_result(),
-        item_service.get_ballot_items(ballot.id)
+        app_ctx.ranking_service().get_instant_runoff_result(),
+        app_ctx.item_service().get_ballot_items(ballot.id)
     )?;
 
     let context = BallotViewContext {
+        uuid,
         best_item,
         ranked_items,
         unranked_items,
     };
-    let body = handlebars_engine.render("ballot", &context)?;
+    let body = app_ctx.handlebars().render("ballot", &context)?;
     Ok(HttpResponse::Ok().body(body))
 }
 
@@ -67,11 +66,10 @@ pub struct BallotUpdateContext {
     ranked_item_ids: Vec<i32>,
 }
 
-pub async fn post<BS, RS>(
+pub async fn post<IS, BS, RS>(
     request: HttpRequest,
     ballot_update_data: web::Json<BallotUpdateContext>,
-    ballot_service: web::Data<BS>,
-    ranking_service: web::Data<RS>,
+    app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
 where
     BS: BallotService,
@@ -90,12 +88,13 @@ where
         }
     };
 
-    let ballot = match ballot_service.login(uuid).await? {
+    let ballot = match app_ctx.ballot_service().login(uuid).await? {
         Some(id) => id,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
 
-    ranking_service
+    app_ctx
+        .ranking_service()
         .update_ballot_rankings(ballot.id, &ballot_update_data.ranked_item_ids)
         .await?;
     Ok(HttpResponse::Accepted().finish())
