@@ -3,6 +3,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use opentelemetry::{
+    sdk::{
+        self,
+        trace::{self, RandomIdGenerator, Sampler},
+    },
+    trace::TraceError,
+};
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::{
@@ -171,6 +178,26 @@ impl TracingConfiguration {
 
     pub fn log_level(&self) -> &str {
         &self.log_level
+    }
+
+    pub fn tracer(&self) -> Result<sdk::trace::Tracer, TraceError> {
+        if !self.jaeger_enabled() {
+            return opentelemetry_jaeger::new_agent_pipeline().install_simple();
+        }
+        opentelemetry_jaeger::new_agent_pipeline()
+            .with_endpoint(self.jaeger_endpoint())
+            .with_service_name(self.service_name())
+            .with_max_packet_size(16_384)
+            .with_auto_split_batch(true)
+            .with_instrumentation_library_tags(false)
+            .with_trace_config(
+                trace::config()
+                    .with_sampler(Sampler::AlwaysOn)
+                    .with_id_generator(RandomIdGenerator::default())
+                    .with_max_events_per_span(64)
+                    .with_max_attributes_per_span(16),
+            )
+            .install_batch(opentelemetry::runtime::Tokio)
     }
 }
 

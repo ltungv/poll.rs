@@ -8,6 +8,7 @@ use crate::{
 
 use super::ServiceError;
 
+#[derive(Clone)]
 pub struct RankingService<R> {
     ranking_repository: R,
 }
