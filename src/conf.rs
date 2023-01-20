@@ -16,8 +16,9 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
     PgPool,
 };
+use tracing_subscriber::EnvFilter;
 
-use crate::{CONFIG_BASE_NAME, CONFIG_DIRECTORY, ENV_PREFIX, ENV_RUN_MODE};
+use crate::{CONFIG_BASE_NAME, CONFIG_DIRECTORY, ENV_LOG_FILTER, ENV_PREFIX, ENV_RUN_MODE};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigurationError {
@@ -158,9 +159,9 @@ impl DatabaseConfiguration {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct TracingConfiguration {
     service_name: String,
+    log_level: String,
     jaeger_enabled: bool,
     jaeger_endpoint: String,
-    log_level: String,
 }
 
 impl TracingConfiguration {
@@ -168,25 +169,17 @@ impl TracingConfiguration {
         &self.service_name
     }
 
-    pub fn jaeger_enabled(&self) -> bool {
-        self.jaeger_enabled
+    pub fn env_filter(&self) -> EnvFilter {
+        EnvFilter::try_from_env(ENV_LOG_FILTER).unwrap_or_else(|_| EnvFilter::new(&self.log_level))
     }
 
-    pub fn jaeger_endpoint(&self) -> &str {
-        &self.jaeger_endpoint
-    }
-
-    pub fn log_level(&self) -> &str {
-        &self.log_level
-    }
-
-    pub fn tracer(&self) -> Result<sdk::trace::Tracer, TraceError> {
-        if !self.jaeger_enabled() {
-            return opentelemetry_jaeger::new_agent_pipeline().install_simple();
+    pub fn jaeger_tracer(&self) -> Result<Option<sdk::trace::Tracer>, TraceError> {
+        if !self.jaeger_enabled {
+            return Ok(None);
         }
         opentelemetry_jaeger::new_agent_pipeline()
-            .with_endpoint(self.jaeger_endpoint())
-            .with_service_name(self.service_name())
+            .with_endpoint(&self.jaeger_endpoint)
+            .with_service_name(&self.service_name)
             .with_max_packet_size(16_384)
             .with_auto_split_batch(true)
             .with_instrumentation_library_tags(false)
@@ -198,6 +191,7 @@ impl TracingConfiguration {
                     .with_max_attributes_per_span(16),
             )
             .install_batch(opentelemetry::runtime::Tokio)
+            .map(Some)
     }
 }
 
