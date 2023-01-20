@@ -1542,6 +1542,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "config",
+ "futures",
  "handlebars",
  "opentelemetry",
  "opentelemetry-jaeger",

@@ -22,7 +22,7 @@ where
         &self,
         ballot_id: i32,
     ) -> Result<(Vec<Item>, Vec<Item>), ServiceError> {
-        let (ranked, unranked) = tokio::try_join!(
+        let (ranked, unranked) = futures::try_join!(
             self.item_repository.find_ranked_by_ballot(ballot_id),
             self.item_repository.find_unranked_by_ballot(ballot_id),
         )?;

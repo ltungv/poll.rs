@@ -1,7 +1,6 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
-use tokio::try_join;
 use tracing::log::{log, Level};
 use uuid::Uuid;
 
@@ -49,7 +48,7 @@ where
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
 
-    let (best_item, (ranked_items, unranked_items)) = try_join!(
+    let (best_item, (ranked_items, unranked_items)) = futures::try_join!(
         ranking_service.get_instant_runoff_result(),
         item_service.get_ballot_items(ballot.id)
     )?;

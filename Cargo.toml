@@ -10,6 +10,7 @@ actix-web = "4"
 anyhow = "1"
 async-trait = "0.1"
 config = { version = "0.13", features = ["yaml"] }
+futures = "0.3"
 handlebars = { version = "4.3.6", features = ["dir_source"] }
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
 opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"] }
