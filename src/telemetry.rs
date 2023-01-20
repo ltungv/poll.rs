@@ -1,3 +1,4 @@
+use opentelemetry::global;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
 use tracing_subscriber::{layer::SubscriberExt, Registry};
@@ -19,6 +20,7 @@ pub fn setup_tracing(config: &Configuration) -> Result<(), anyhow::Error> {
     match config.tracing().jaeger_tracer()? {
         Some(tracer) => {
             let registry = registry.with(tracing_opentelemetry::layer().with_tracer(tracer));
+            global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
             tracing::subscriber::set_global_default(registry)?;
         }
         None => tracing::subscriber::set_global_default(registry)?,
