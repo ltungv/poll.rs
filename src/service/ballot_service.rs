@@ -5,6 +5,7 @@ use crate::{model::ballot::Ballot, repository::BallotRepository};
 
 use super::ServiceError;
 
+#[derive(Clone)]
 pub struct BallotService<B> {
     ballot_repository: B,
 }

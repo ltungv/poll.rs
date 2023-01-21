@@ -7,16 +7,17 @@ use actix_web::{
 };
 use futures::future::{ready, LocalBoxFuture, Ready};
 
+#[derive(Clone)]
 pub struct RedirectMiddleware<F> {
     predicate: Rc<F>,
-    redirected_to: Rc<String>,
+    redirected_to: &'static str,
 }
 
 impl<F> RedirectMiddleware<F> {
-    pub fn new(predicate: F, redirected_to: &str) -> Self {
+    pub fn new(predicate: F, redirected_to: &'static str) -> Self {
         Self {
             predicate: Rc::new(predicate),
-            redirected_to: Rc::new(redirected_to.to_string()),
+            redirected_to,
         }
     }
 }
@@ -38,14 +39,15 @@ where
         ready(Ok(RedirectOnHavingBallotSessionMiddlewareInner {
             service,
             predicate: self.predicate.clone(),
-            redirected_to: self.redirected_to.clone(),
+            redirected_to: self.redirected_to,
         }))
     }
 }
+
 pub struct RedirectOnHavingBallotSessionMiddlewareInner<S, F> {
     service: S,
     predicate: Rc<F>,
-    redirected_to: Rc<String>,
+    redirected_to: &'static str,
 }
 
 impl<S, B, F> Service<ServiceRequest> for RedirectOnHavingBallotSessionMiddlewareInner<S, F>
@@ -63,10 +65,11 @@ where
 
     fn call(&self, request: ServiceRequest) -> Self::Future {
         let can_redirect = (self.predicate)(&request);
-        if can_redirect && request.path() != self.redirected_to.as_str() {
+        tracing::info!(%can_redirect, path = %request.path(), "calling redirect middleware");
+        if can_redirect && request.path() != self.redirected_to {
             let (request, _pl) = request.into_parts();
             let response = HttpResponse::SeeOther()
-                .insert_header((http::header::LOCATION, self.redirected_to.as_str()))
+                .insert_header((http::header::LOCATION, self.redirected_to))
                 .finish()
                 .map_into_right_body();
             return Box::pin(async { Ok(ServiceResponse::new(request, response)) });

@@ -7,13 +7,11 @@ use actix_web::{
     dev::{Server, ServiceRequest},
     web, App, HttpServer, ResponseError,
 };
+use handlebars::Handlebars;
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
-use crate::{
-    app::ApplicationContext, conf::Configuration,
-    middleware::redirect_middleware::RedirectMiddleware, service,
-};
+use crate::{conf::Configuration, middleware::redirect_middleware::RedirectMiddleware, service};
 
 pub mod ballot;
 pub mod health;
@@ -37,47 +35,53 @@ impl ResponseError for RouteError {}
 
 pub fn serve<IS, BS, RS>(
     config: &Configuration,
-    app_ctx: ApplicationContext<'static, IS, BS, RS>,
+    handlebars: Handlebars<'static>,
+    item_service: IS,
+    ballot_service: BS,
+    ranking_service: RS,
 ) -> Result<Server, std::io::Error>
 where
-    IS: service::ItemService,
-    BS: service::BallotService,
-    RS: service::RankingService,
+    IS: 'static + service::ItemService,
+    BS: 'static + service::BallotService,
+    RS: 'static + service::RankingService,
 {
-    let secret = cookie::Key::from(
+    let hmac_secret = cookie::Key::from(
         config
             .application()
             .hmac_secret()
             .expose_secret()
             .as_bytes(),
     );
-    let app_ctx = web::Data::new(app_ctx);
+    let handlebars = web::Data::new(handlebars);
     let listener = TcpListener::bind(config.application().address())?;
     let server = HttpServer::new(move || {
+        let is_indentified = |r: &ServiceRequest| r.get_identity().is_ok();
+        let is_unindentified = |r: &ServiceRequest| r.get_identity().is_err();
         App::new()
-            .app_data(app_ctx.clone())
+            .app_data(handlebars.clone())
+            .app_data(web::Data::new(item_service.clone()))
+            .app_data(web::Data::new(ballot_service.clone()))
+            .app_data(web::Data::new(ranking_service.clone()))
             .wrap(TracingLogger::default())
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
-                secret.clone(),
+                hmac_secret.clone(),
             ))
-            .route("/health", web::get().to(health::get))
             .service(
                 web::scope("/")
-                    .wrap(RedirectMiddleware::new(
-                        |r: &ServiceRequest| r.get_identity().is_ok(),
-                        "/ballot",
-                    ))
-                    .route("", web::get().to(index::get::<IS, BS, RS>))
+                    .wrap(RedirectMiddleware::new(is_indentified, "/ballot"))
+                    .route("", web::get().to(index::get::<RS>))
                     .route("/login", web::post().to(login::post::<IS, BS, RS>))
                     .route("/register", web::post().to(register::post::<IS, BS, RS>)),
             )
             .service(
                 web::resource("/ballot")
+                    .wrap(RedirectMiddleware::new(is_unindentified, "/"))
                     .route(web::get().to(ballot::get::<IS, BS, RS>))
-                    .route(web::post().to(ballot::post::<IS, BS, RS>)),
+                    .route(web::post().to(ballot::post::<BS, RS>)),
             )
+            .route("/health", web::get().to(health::get))
     })
     .listen(listener)?
     .run();

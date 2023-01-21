@@ -3,6 +3,7 @@ use async_trait::async_trait;
 
 use super::ServiceError;
 
+#[derive(Clone)]
 pub struct ItemService<I> {
     item_repository: I,
 }

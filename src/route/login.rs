@@ -2,7 +2,7 @@ use actix_identity::Identity;
 use actix_web::{http::header, web, HttpMessage, HttpRequest, HttpResponse};
 use serde::Deserialize;
 
-use crate::{app::ApplicationContext, service::BallotService};
+use crate::service::BallotService;
 
 use super::RouteError;
 
@@ -11,16 +11,16 @@ pub struct LoginFormData {
     uuid: String,
 }
 
-#[tracing::instrument(skip(request, app_ctx))]
+#[tracing::instrument(skip(request, ballot_service))]
 pub async fn post<IS, BS, RS>(
     request: HttpRequest,
     form: web::Form<LoginFormData>,
-    app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
+    ballot_service: web::Data<BS>,
 ) -> Result<HttpResponse, RouteError>
 where
     BS: BallotService,
 {
-    match app_ctx.ballot_service().find_ballot(&form.uuid).await? {
+    match ballot_service.find_ballot(&form.uuid).await? {
         Some(ballot) => Identity::login(&request.extensions(), ballot.uuid.to_string())?,
         None => {
             // TODO: Send flash message

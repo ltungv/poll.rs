@@ -3,19 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use opentelemetry::{
-    sdk::{
-        self,
-        trace::{self, RandomIdGenerator, Sampler},
-    },
-    trace::TraceError,
-};
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
-    PgPool,
-};
 use tracing_subscriber::EnvFilter;
 
 use crate::{CONFIG_BASE_NAME, CONFIG_DIRECTORY, ENV_LOG_FILTER, ENV_PREFIX, ENV_RUN_MODE};
@@ -130,34 +119,32 @@ pub struct DatabaseConfiguration {
     port: u16,
     username: String,
     password: Secret<String>,
-    database: Option<String>,
+    database: String,
 }
 
 impl DatabaseConfiguration {
-    pub fn pg_pool(&self) -> PgPool {
-        let ssl_mode = if self.require_ssl {
-            PgSslMode::Require
-        } else {
-            PgSslMode::Prefer
-        };
+    pub fn require_ssl(&self) -> bool {
+        self.require_ssl
+    }
 
-        let connection_options = {
-            let opts = PgConnectOptions::new()
-                .host(&self.host)
-                .username(&self.username)
-                .password(self.password.expose_secret())
-                .port(self.port)
-                .ssl_mode(ssl_mode);
+    pub fn host(&self) -> &str {
+        &self.host
+    }
 
-            match &self.database {
-                Some(database) => opts.database(database),
-                None => opts,
-            }
-        };
+    pub fn port(&self) -> u16 {
+        self.port
+    }
 
-        PgPoolOptions::new()
-            .acquire_timeout(std::time::Duration::from_secs(2))
-            .connect_lazy_with(connection_options)
+    pub fn username(&self) -> &str {
+        &self.username
+    }
+
+    pub fn password(&self) -> &str {
+        self.password.expose_secret()
+    }
+
+    pub fn database(&self) -> &str {
+        &self.database
     }
 }
 
@@ -178,25 +165,12 @@ impl TracingConfiguration {
         EnvFilter::try_from_env(ENV_LOG_FILTER).unwrap_or_else(|_| EnvFilter::new(&self.log_level))
     }
 
-    pub fn jaeger_tracer(&self) -> Result<Option<sdk::trace::Tracer>, TraceError> {
-        if !self.jaeger_enabled {
-            return Ok(None);
-        }
-        opentelemetry_jaeger::new_agent_pipeline()
-            .with_endpoint(&self.jaeger_endpoint)
-            .with_service_name(&self.service_name)
-            .with_max_packet_size(16_384)
-            .with_auto_split_batch(true)
-            .with_instrumentation_library_tags(false)
-            .with_trace_config(
-                trace::config()
-                    .with_sampler(Sampler::AlwaysOn)
-                    .with_id_generator(RandomIdGenerator::default())
-                    .with_max_events_per_span(64)
-                    .with_max_attributes_per_span(16),
-            )
-            .install_batch(opentelemetry::runtime::Tokio)
-            .map(Some)
+    pub fn jaeger_enabled(&self) -> bool {
+        self.jaeger_enabled
+    }
+
+    pub fn jaeger_endpoint(&self) -> &str {
+        &self.jaeger_endpoint
     }
 }
 

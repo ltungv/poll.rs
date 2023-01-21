@@ -12,15 +12,13 @@ use crate::{
 
 use actix_web::dev::Server;
 use handlebars::Handlebars;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
-pub type DefaultApplicationContext<'a> = ApplicationContext<
-    'a,
-    ItemService<ItemRepository>,
-    BallotService<BallotRepository>,
-    RankingService<RankingRepository>,
->;
+pub struct Application {
+    server: Server,
+}
 
-impl DefaultApplicationContext<'_> {
+impl Application {
     pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
         let mut handlebars = Handlebars::new();
         handlebars.register_templates_directory(
@@ -28,7 +26,22 @@ impl DefaultApplicationContext<'_> {
             configuration.application().template_directory(),
         )?;
 
-        let db_pool = configuration.database().pg_pool();
+        let db_pool = PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_secs(2))
+            .connect_lazy_with(
+                PgConnectOptions::new()
+                    .ssl_mode(if configuration.database().require_ssl() {
+                        PgSslMode::Require
+                    } else {
+                        PgSslMode::Prefer
+                    })
+                    .host(configuration.database().host())
+                    .port(configuration.database().port())
+                    .username(configuration.database().username())
+                    .password(configuration.database().password())
+                    .database(configuration.database().database()),
+            );
+
         let item_repository = ItemRepository::new(db_pool.clone());
         let ballot_repository = BallotRepository::new(db_pool.clone());
         let ranking_repository = RankingRepository::new(db_pool);
@@ -37,53 +50,14 @@ impl DefaultApplicationContext<'_> {
         let ballot_service = BallotService::new(ballot_repository);
         let ranking_service = RankingService::new(ranking_repository);
 
-        Ok(Self {
+        let server = route::serve(
+            configuration,
             handlebars,
             item_service,
             ballot_service,
             ranking_service,
-        })
-    }
-}
+        )?;
 
-pub struct ApplicationContext<'a, IS, BS, RS>
-where
-    IS: 'a,
-    BS: 'a,
-    RS: 'a,
-{
-    handlebars: Handlebars<'a>,
-    item_service: IS,
-    ballot_service: BS,
-    ranking_service: RS,
-}
-
-impl<'a, IS, BS, RS> ApplicationContext<'a, IS, BS, RS> {
-    pub fn handlebars(&self) -> &Handlebars {
-        &self.handlebars
-    }
-
-    pub fn item_service(&self) -> &IS {
-        &self.item_service
-    }
-
-    pub fn ballot_service(&self) -> &BS {
-        &self.ballot_service
-    }
-
-    pub fn ranking_service(&self) -> &RS {
-        &self.ranking_service
-    }
-}
-
-pub struct Application {
-    server: Server,
-}
-
-impl Application {
-    pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
-        let app_ctx = ApplicationContext::new(configuration)?;
-        let server = route::serve(configuration, app_ctx)?;
         Ok(Application { server })
     }
 
