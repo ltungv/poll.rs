@@ -1,7 +1,6 @@
 use actix_identity::Identity;
-use actix_web::{web, HttpResponse};
+use actix_web::{http::header, web, HttpResponse};
 use serde::{Deserialize, Serialize};
-use tracing::log::{log, Level};
 use uuid::Uuid;
 
 use crate::{
@@ -30,28 +29,40 @@ where
     RS: RankingService,
 {
     let identity = match identity {
-        Some(id) => id,
-        None => return Ok(HttpResponse::Unauthorized().finish()),
-    };
-
-    let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
-        Ok(u) => u,
-        Err(err) => {
-            log!(Level::Error, "{}", err);
-            return Ok(HttpResponse::BadRequest().finish());
+        Some(v) => v,
+        None => {
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish())
         }
     };
 
-    let ballot = match app_ctx.ballot_service().login(uuid).await? {
-        Some(id) => id,
-        None => return Ok(HttpResponse::Unauthorized().finish()),
+    let uuid = match Uuid::parse_str(&identity.id()?) {
+        Ok(v) => v,
+        Err(_err) => {
+            // TODO: Send flash message
+            Identity::logout(identity);
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish());
+        }
+    };
+
+    let ballot = match app_ctx.ballot_service().find_ballot(uuid).await? {
+        Some(v) => v,
+        None => {
+            // TODO: Send flash message
+            Identity::logout(identity);
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish());
+        }
     };
 
     let (best_item, (ranked_items, unranked_items)) = futures::try_join!(
         app_ctx.ranking_service().get_instant_runoff_result(),
         app_ctx.item_service().get_ballot_items(ballot.id)
     )?;
-
     let context = BallotViewContext {
         uuid,
         best_item,
@@ -59,6 +70,7 @@ where
         unranked_items,
     };
     let body = app_ctx.handlebars().render("ballot", &context)?;
+
     Ok(HttpResponse::Ok().body(body))
 }
 
@@ -77,21 +89,34 @@ where
     RS: RankingService,
 {
     let identity = match identity {
-        Some(id) => id,
-        None => return Ok(HttpResponse::Unauthorized().finish()),
-    };
-
-    let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
-        Ok(u) => u,
-        Err(err) => {
-            log!(Level::Error, "{}", err);
-            return Ok(HttpResponse::BadRequest().finish());
+        Some(v) => v,
+        None => {
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish())
         }
     };
 
-    let ballot = match app_ctx.ballot_service().login(uuid).await? {
-        Some(id) => id,
-        None => return Ok(HttpResponse::Unauthorized().finish()),
+    let uuid = match Uuid::parse_str(&identity.id()?) {
+        Ok(v) => v,
+        Err(_err) => {
+            // TODO: Send flash message
+            Identity::logout(identity);
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish());
+        }
+    };
+
+    let ballot = match app_ctx.ballot_service().find_ballot(uuid).await? {
+        Some(v) => v,
+        None => {
+            // TODO: Send flash message
+            Identity::logout(identity);
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish());
+        }
     };
 
     app_ctx

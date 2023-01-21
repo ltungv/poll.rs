@@ -26,7 +26,7 @@ where
         Ok(uuid)
     }
 
-    async fn login(&self, uuid: Uuid) -> Result<Option<Ballot>, ServiceError> {
+    async fn find_ballot(&self, uuid: Uuid) -> Result<Option<Ballot>, ServiceError> {
         let ballot = self.ballot_repository.find_by_uuid(uuid).await?;
         Ok(ballot)
     }

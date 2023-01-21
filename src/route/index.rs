@@ -1,8 +1,6 @@
 use actix_identity::Identity;
 use actix_web::{http::header, web, HttpResponse};
 use serde::Serialize;
-use tracing::log::{log, Level};
-use uuid::Uuid;
 
 use crate::{
     app::ApplicationContext,
@@ -25,27 +23,19 @@ where
     BS: BallotService,
     RS: RankingService,
 {
-    if let Some(identity) = identity {
-        {
-            let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
-                Ok(u) => u,
-                Err(err) => {
-                    log!(Level::Error, "{}", err);
-                    return Ok(HttpResponse::BadRequest().finish());
-                }
-            };
-            if app_ctx.ballot_service().login(uuid).await?.is_some() {
-                return Ok(HttpResponse::Found()
-                    .insert_header((header::LOCATION, "/ballot"))
-                    .finish());
-            }
-        }
+    if identity.is_some() {
+        // Redirect if there's an existing session
+        return Ok(HttpResponse::SeeOther()
+            .insert_header((header::LOCATION, "/ballot"))
+            .finish());
     }
+
     let best_item = app_ctx
         .ranking_service()
         .get_instant_runoff_result()
         .await?;
     let context = IndexContext { best_item };
     let body = app_ctx.handlebars().render("index", &context)?;
+
     Ok(HttpResponse::Ok().body(body))
 }

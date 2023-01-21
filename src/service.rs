@@ -27,7 +27,7 @@ pub trait ItemService: Send + Sync {
 #[async_trait]
 pub trait BallotService: Send + Sync {
     async fn register(&self) -> Result<Uuid, ServiceError>;
-    async fn login(&self, uuid: Uuid) -> Result<Option<Ballot>, ServiceError>;
+    async fn find_ballot(&self, uuid: Uuid) -> Result<Option<Ballot>, ServiceError>;
 }
 
 #[async_trait]

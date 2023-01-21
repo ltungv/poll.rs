@@ -20,18 +20,6 @@ pub type DefaultApplicationContext<'a> = ApplicationContext<
     RankingService<RankingRepository>,
 >;
 
-pub struct ApplicationContext<'a, IS, BS, RS>
-where
-    IS: 'a,
-    BS: 'a,
-    RS: 'a,
-{
-    handlebars: Handlebars<'a>,
-    item_service: IS,
-    ballot_service: BS,
-    ranking_service: RS,
-}
-
 impl DefaultApplicationContext<'_> {
     pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
         let mut handlebars = Handlebars::new();
@@ -56,6 +44,18 @@ impl DefaultApplicationContext<'_> {
             ranking_service,
         })
     }
+}
+
+pub struct ApplicationContext<'a, IS, BS, RS>
+where
+    IS: 'a,
+    BS: 'a,
+    RS: 'a,
+{
+    handlebars: Handlebars<'a>,
+    item_service: IS,
+    ballot_service: BS,
+    ranking_service: RS,
 }
 
 impl<'a, IS, BS, RS> ApplicationContext<'a, IS, BS, RS> {
