@@ -2,22 +2,24 @@ use std::rc::Rc;
 
 use actix_web::{
     body::EitherBody,
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    dev::{ResourceDef, Service, ServiceRequest, ServiceResponse, Transform},
     http, HttpResponse,
 };
 use futures::future::{ready, LocalBoxFuture, Ready};
 
 #[derive(Clone)]
 pub struct RedirectMiddleware<F> {
-    predicate: Rc<F>,
     redirected_to: &'static str,
+    resources: Rc<Vec<ResourceDef>>,
+    predicate: Rc<F>,
 }
 
 impl<F> RedirectMiddleware<F> {
-    pub fn new(predicate: F, redirected_to: &'static str) -> Self {
+    pub fn new(redirected_to: &'static str, predicate: F, resources: &[ResourceDef]) -> Self {
         Self {
-            predicate: Rc::new(predicate),
             redirected_to,
+            resources: Rc::new(resources.to_vec()),
+            predicate: Rc::new(predicate),
         }
     }
 }
@@ -38,16 +40,18 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(RedirectOnHavingBallotSessionMiddlewareInner {
             service,
-            predicate: self.predicate.clone(),
             redirected_to: self.redirected_to,
+            resources: self.resources.clone(),
+            predicate: self.predicate.clone(),
         }))
     }
 }
 
 pub struct RedirectOnHavingBallotSessionMiddlewareInner<S, F> {
     service: S,
-    predicate: Rc<F>,
     redirected_to: &'static str,
+    resources: Rc<Vec<ResourceDef>>,
+    predicate: Rc<F>,
 }
 
 impl<S, B, F> Service<ServiceRequest> for RedirectOnHavingBallotSessionMiddlewareInner<S, F>
@@ -64,9 +68,15 @@ where
     actix_web::dev::forward_ready!(service);
 
     fn call(&self, request: ServiceRequest) -> Self::Future {
-        let can_redirect = (self.predicate)(&request);
-        tracing::info!(%can_redirect, path = %request.path(), "calling redirect middleware");
-        if can_redirect && request.path() != self.redirected_to {
+        let match_resource = self
+            .resources
+            .iter()
+            .any(|res| res.is_match(request.path()));
+        let match_predicate = (self.predicate)(&request);
+
+        tracing::info!(%match_resource, %match_predicate, path = %request.path(), "calling redirect middleware");
+
+        if match_resource && match_predicate {
             let (request, _pl) = request.into_parts();
             let response = HttpResponse::SeeOther()
                 .insert_header((http::header::LOCATION, self.redirected_to))
@@ -74,6 +84,7 @@ where
                 .map_into_right_body();
             return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
         }
+
         let res = self.service.call(request);
         Box::pin(async move { res.await.map(ServiceResponse::map_into_left_body) })
     }

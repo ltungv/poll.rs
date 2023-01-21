@@ -4,7 +4,7 @@ use actix_identity::{IdentityExt, IdentityMiddleware};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
     cookie,
-    dev::{Server, ServiceRequest},
+    dev::{ResourceDef, Server, ServiceRequest},
     web, App, HttpServer, ResponseError,
 };
 use handlebars::Handlebars;
@@ -63,21 +63,30 @@ where
             .app_data(web::Data::new(ballot_service.clone()))
             .app_data(web::Data::new(ranking_service.clone()))
             .wrap(TracingLogger::default())
+            .wrap(RedirectMiddleware::new(
+                "/ballot",
+                is_indentified,
+                &[
+                    ResourceDef::new("/"),
+                    ResourceDef::new("/login"),
+                    ResourceDef::new("/register"),
+                ],
+            ))
+            .wrap(RedirectMiddleware::new(
+                "/",
+                is_unindentified,
+                &[ResourceDef::new("/ballot")],
+            ))
             .wrap(IdentityMiddleware::default())
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
                 hmac_secret.clone(),
             ))
-            .service(
-                web::scope("/")
-                    .wrap(RedirectMiddleware::new(is_indentified, "/ballot"))
-                    .route("", web::get().to(index::get::<RS>))
-                    .route("/login", web::post().to(login::post::<IS, BS, RS>))
-                    .route("/register", web::post().to(register::post::<IS, BS, RS>)),
-            )
+            .route("/", web::get().to(index::get::<RS>))
+            .route("/login", web::post().to(login::post::<IS, BS, RS>))
+            .route("/register", web::post().to(register::post::<IS, BS, RS>))
             .service(
                 web::resource("/ballot")
-                    .wrap(RedirectMiddleware::new(is_unindentified, "/"))
                     .route(web::get().to(ballot::get::<IS, BS, RS>))
                     .route(web::post().to(ballot::post::<BS, RS>)),
             )
