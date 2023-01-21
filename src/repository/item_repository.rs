@@ -6,7 +6,7 @@ use crate::{model::item::Item, repository};
 
 use super::RepositoryError;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ItemRepository {
     pool: PgPool,
 }
@@ -19,7 +19,7 @@ impl ItemRepository {
 
 #[async_trait]
 impl repository::ItemRepository for ItemRepository {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn find_ranked_by_ballot(&self, ballot_id: i32) -> Result<Vec<Item>, RepositoryError> {
         let items = sqlx::query_as!(
             Item,
@@ -37,7 +37,7 @@ impl repository::ItemRepository for ItemRepository {
         Ok(items)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn find_unranked_by_ballot(&self, ballot_id: i32) -> Result<Vec<Item>, RepositoryError> {
         let items = sqlx::query_as!(
             Item,

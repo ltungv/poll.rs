@@ -7,7 +7,7 @@ use crate::{model::ballot::Ballot, repository};
 
 use super::RepositoryError;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct BallotRepository {
     pool: PgPool,
 }
@@ -20,7 +20,7 @@ impl BallotRepository {
 
 #[async_trait]
 impl repository::BallotRepository for BallotRepository {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn find_by_uuid(&self, uuid: Uuid) -> Result<Option<Ballot>, RepositoryError> {
         let ballot = sqlx::query_as!(Ballot, "SELECT * FROM ballots WHERE uuid = $1", uuid)
             .fetch_optional(&self.pool)
@@ -29,11 +29,14 @@ impl repository::BallotRepository for BallotRepository {
         Ok(ballot)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn create(&self, uuid: Uuid) -> Result<(), RepositoryError> {
-        sqlx::query!("INSERT INTO ballots(uuid) VALUES ($1);", uuid)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query!(
+            "INSERT INTO ballots (uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;",
+            uuid
+        )
+        .execute(&self.pool)
+        .await?;
 
         Ok(())
     }

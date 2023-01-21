@@ -18,6 +18,7 @@ impl<I> super::ItemService for ItemService<I>
 where
     I: ItemRepository,
 {
+    #[tracing::instrument(skip(self))]
     async fn get_ballot_items(
         &self,
         ballot_id: i32,

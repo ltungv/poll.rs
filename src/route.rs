@@ -1,12 +1,19 @@
 use std::net::TcpListener;
 
-use actix_identity::IdentityMiddleware;
+use actix_identity::{IdentityExt, IdentityMiddleware};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie, dev::Server, web, App, HttpServer, ResponseError};
+use actix_web::{
+    cookie,
+    dev::{Server, ServiceRequest},
+    web, App, HttpServer, ResponseError,
+};
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
-use crate::{app::ApplicationContext, conf::Configuration, service};
+use crate::{
+    app::ApplicationContext, conf::Configuration,
+    middleware::redirect_middleware::RedirectMiddleware, service,
+};
 
 pub mod ballot;
 pub mod health;
@@ -55,10 +62,17 @@ where
                 CookieSessionStore::default(),
                 secret.clone(),
             ))
-            .route("/", web::get().to(index::get::<IS, BS, RS>))
             .route("/health", web::get().to(health::get))
-            .route("/login", web::post().to(login::post::<IS, BS, RS>))
-            .route("/register", web::get().to(register::get::<IS, BS, RS>))
+            .service(
+                web::scope("/")
+                    .wrap(RedirectMiddleware::new(
+                        |r: &ServiceRequest| r.get_identity().is_ok(),
+                        "/ballot",
+                    ))
+                    .route("", web::get().to(index::get::<IS, BS, RS>))
+                    .route("/login", web::post().to(login::post::<IS, BS, RS>))
+                    .route("/register", web::post().to(register::post::<IS, BS, RS>)),
+            )
             .service(
                 web::resource("/ballot")
                     .route(web::get().to(ballot::get::<IS, BS, RS>))

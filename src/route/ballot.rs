@@ -19,6 +19,7 @@ struct BallotViewContext {
     unranked_items: Vec<Item>,
 }
 
+#[tracing::instrument(skip(identity, app_ctx))]
 pub async fn get<IS, BS, RS>(
     identity: Option<Identity>,
     app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
@@ -36,19 +37,11 @@ where
                 .finish())
         }
     };
-
-    let uuid = match Uuid::parse_str(&identity.id()?) {
-        Ok(v) => v,
-        Err(_err) => {
-            // TODO: Send flash message
-            Identity::logout(identity);
-            return Ok(HttpResponse::SeeOther()
-                .insert_header((header::LOCATION, "/"))
-                .finish());
-        }
-    };
-
-    let ballot = match app_ctx.ballot_service().find_ballot(uuid).await? {
+    let ballot = match app_ctx
+        .ballot_service()
+        .find_ballot(&identity.id()?)
+        .await?
+    {
         Some(v) => v,
         None => {
             // TODO: Send flash message
@@ -58,30 +51,29 @@ where
                 .finish());
         }
     };
-
     let (best_item, (ranked_items, unranked_items)) = futures::try_join!(
         app_ctx.ranking_service().get_instant_runoff_result(),
         app_ctx.item_service().get_ballot_items(ballot.id)
     )?;
     let context = BallotViewContext {
-        uuid,
+        uuid: ballot.uuid,
         best_item,
         ranked_items,
         unranked_items,
     };
     let body = app_ctx.handlebars().render("ballot", &context)?;
-
     Ok(HttpResponse::Ok().body(body))
 }
 
-#[derive(Deserialize)]
-pub struct BallotUpdateContext {
+#[derive(Debug, Deserialize)]
+pub struct BallotUpdateData {
     ranked_item_ids: Vec<i32>,
 }
 
+#[tracing::instrument(skip(identity, app_ctx))]
 pub async fn post<IS, BS, RS>(
     identity: Option<Identity>,
-    ballot_update_data: web::Json<BallotUpdateContext>,
+    ballot_update_data: web::Json<BallotUpdateData>,
     app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
 where
@@ -96,19 +88,11 @@ where
                 .finish())
         }
     };
-
-    let uuid = match Uuid::parse_str(&identity.id()?) {
-        Ok(v) => v,
-        Err(_err) => {
-            // TODO: Send flash message
-            Identity::logout(identity);
-            return Ok(HttpResponse::SeeOther()
-                .insert_header((header::LOCATION, "/"))
-                .finish());
-        }
-    };
-
-    let ballot = match app_ctx.ballot_service().find_ballot(uuid).await? {
+    let ballot = match app_ctx
+        .ballot_service()
+        .find_ballot(&identity.id()?)
+        .await?
+    {
         Some(v) => v,
         None => {
             // TODO: Send flash message
@@ -118,7 +102,6 @@ where
                 .finish());
         }
     };
-
     app_ctx
         .ranking_service()
         .update_ballot_rankings(ballot.id, &ballot_update_data.ranked_item_ids)

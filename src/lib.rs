@@ -3,6 +3,7 @@ pub mod conf;
 pub mod telemetry;
 
 pub(crate) mod irv;
+pub(crate) mod middleware;
 pub(crate) mod model;
 pub(crate) mod repository;
 pub(crate) mod route;

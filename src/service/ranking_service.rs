@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crate::{
     irv::{instant_runoff_vote, InstantRunoffVotingResult},
     model::item::Item,
-    repository::RankingRepository,
+    repository::TransactableRankingRepository,
 };
 
 use super::ServiceError;
@@ -21,8 +21,9 @@ impl<R> RankingService<R> {
 #[async_trait]
 impl<R> super::RankingService for RankingService<R>
 where
-    R: RankingRepository,
+    R: TransactableRankingRepository,
 {
+    #[tracing::instrument(skip(self))]
     async fn get_instant_runoff_result(&self) -> Result<Option<Item>, ServiceError> {
         let rankings = self.ranking_repository.get_all().await?;
 
@@ -50,6 +51,7 @@ where
         Ok(best_item)
     }
 
+    #[tracing::instrument(skip(self))]
     async fn update_ballot_rankings(
         &self,
         ballot_id: i32,

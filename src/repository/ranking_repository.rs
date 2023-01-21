@@ -13,7 +13,7 @@ use crate::{
 
 use super::{RepositoryError, Transact};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RankingRepository {
     pool: PgPool,
 }
@@ -28,20 +28,19 @@ impl RankingRepository {
 impl Transact for RankingRepository {
     type Txn = Transaction<'static, Postgres>;
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn begin(&self) -> Result<Self::Txn, RepositoryError> {
         Ok(self.pool.begin().await?)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self, txn))]
     async fn end(&self, txn: Self::Txn) -> Result<(), RepositoryError> {
         Ok(txn.commit().await?)
     }
 }
-
 #[async_trait]
 impl repository::RankingRepository for RankingRepository {
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     async fn get_all(&self) -> Result<Vec<Ranking>, RepositoryError> {
         // Query for items sorted by ballot id and ranking order
         let rows = sqlx::query!(
@@ -84,8 +83,11 @@ impl repository::RankingRepository for RankingRepository {
             })
             .collect())
     }
+}
 
-    #[tracing::instrument]
+#[async_trait]
+impl repository::TransactableRankingRepository for RankingRepository {
+    #[tracing::instrument(skip(self, txn))]
     async fn txn_create(
         &self,
         ranking: NewRanking,
@@ -103,6 +105,7 @@ impl repository::RankingRepository for RankingRepository {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, txn))]
     async fn txn_remove_all_ballot_rankings(
         &self,
         ballot_id: i32,

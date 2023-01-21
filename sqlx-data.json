@@ -124,18 +124,6 @@
     },
     "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items INNER JOIN rankings ON items.id = rankings.item_id\n            WHERE NOT items.done AND rankings.ballot_id = $1 \n            ORDER BY rankings.ord ASC;\n            "
   },
-  "2e45863a33819a3a5bbc3dbd7ebcdb53bf41f983dadd90d58b77b504dbad6fc6": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      }
-    },
-    "query": "INSERT INTO ballots(uuid) VALUES ($1);"
-  },
   "56bb81f8df4395c28c648170e9bf5d3d260be8a4ae39d9f6cbe6c6e2ed244350": {
     "describe": {
       "columns": [
@@ -187,6 +175,18 @@
       }
     },
     "query": "INSERT INTO RANKINGS(ord, item_id, ballot_id) VALUES ($1, $2, $3)"
+  },
+  "bbeaa0bb00452d955fede7ede4bfed2e43a94eee0cc25b75206ccc0f140169d0": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO ballots (uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;"
   },
   "d88e1c332bc300cea5c9d2d5d60519e3ddc5822836ccaadf29cb9a1de1a4a509": {
     "describe": {

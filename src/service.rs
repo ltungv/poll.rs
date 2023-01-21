@@ -26,8 +26,14 @@ pub trait ItemService: Send + Sync {
 
 #[async_trait]
 pub trait BallotService: Send + Sync {
-    async fn register(&self) -> Result<Uuid, ServiceError>;
-    async fn find_ballot(&self, uuid: Uuid) -> Result<Option<Ballot>, ServiceError>;
+    /// Register a new ballot with the given string creating a new random UUID
+    /// if the string is not a valid UUID. If the UUID already exists, do nothing
+    /// and simply return it back to the caller.
+    async fn register(&self, uuid: &str) -> Result<Uuid, ServiceError>;
+
+    /// Find new ballot with the given string and guaranteed to return `None`
+    /// if the string is not a valid UUID.
+    async fn find_ballot(&self, uuid: &str) -> Result<Option<Ballot>, ServiceError>;
 }
 
 #[async_trait]

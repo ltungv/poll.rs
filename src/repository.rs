@@ -18,6 +18,14 @@ pub enum RepositoryError {
 }
 
 #[async_trait]
+pub trait Transact {
+    type Txn: Send + Sync;
+
+    async fn begin(&self) -> Result<Self::Txn, RepositoryError>;
+    async fn end(&self, txn: Self::Txn) -> Result<(), RepositoryError>;
+}
+
+#[async_trait]
 pub trait ItemRepository: Send + Sync {
     async fn find_ranked_by_ballot(&self, ballot_id: i32) -> Result<Vec<Item>, RepositoryError>;
 
@@ -26,15 +34,15 @@ pub trait ItemRepository: Send + Sync {
 
 #[async_trait]
 pub trait BallotRepository: Send + Sync {
+    /// Find a ballot with the given UUID.
     async fn find_by_uuid(&self, uuid: Uuid) -> Result<Option<Ballot>, RepositoryError>;
 
+    /// Create a new ballot with the given UUID and do nothing if the UUID already exists.
     async fn create(&self, uuid: Uuid) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]
-pub trait RankingRepository: Transact + Send + Sync {
-    async fn get_all(&self) -> Result<Vec<Ranking>, RepositoryError>;
-
+pub trait TransactableRankingRepository: Transact + RankingRepository {
     async fn txn_create(
         &self,
         ranking: NewRanking,
@@ -49,9 +57,6 @@ pub trait RankingRepository: Transact + Send + Sync {
 }
 
 #[async_trait]
-pub trait Transact {
-    type Txn: Send + Sync;
-
-    async fn begin(&self) -> Result<Self::Txn, RepositoryError>;
-    async fn end(&self, txn: Self::Txn) -> Result<(), RepositoryError>;
+pub trait RankingRepository: Send + Sync {
+    async fn get_all(&self) -> Result<Vec<Ranking>, RepositoryError>;
 }
