@@ -59,19 +59,23 @@ where
         ranked_item_ids: &[i32],
     ) -> Result<(), ServiceError> {
         let mut txn = self.ranking_repository.begin().await?;
+
         self.ranking_repository
-            .txn_remove_all_ballot_rankings(ballot_id, &mut txn)
+            .txn_remove_ballot_rankings(&mut txn, ballot_id)
             .await?;
-        for (ord, item_id) in ranked_item_ids.iter().enumerate() {
-            let ranking = crate::model::ranking::NewRanking {
-                ord: ord as i32,
-                item_id: *item_id,
-                ballot_id,
-            };
-            self.ranking_repository
-                .txn_create(ranking, &mut txn)
-                .await?;
-        }
+        self.ranking_repository
+            .txn_create_bulk(
+                &mut txn,
+                ranked_item_ids.iter().enumerate().map(|(ord, item_id)| {
+                    crate::model::ranking::NewRanking {
+                        ord: ord as i32,
+                        item_id: *item_id,
+                        ballot_id,
+                    }
+                }),
+            )
+            .await?;
+
         self.ranking_repository.end(txn).await?;
         Ok(())
     }

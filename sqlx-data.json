@@ -162,21 +162,7 @@
     },
     "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items LEFT JOIN rankings ON items.id = rankings.item_id AND rankings.ballot_id = $1\n            WHERE NOT items.done AND rankings.ballot_id IS NULL\n            ORDER BY rankings.ord ASC;\n            "
   },
-  "5d3ba32227ac747839c82e31bf9f58b008cfed897e23f0b97f996425b6267844": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Int4",
-          "Int4",
-          "Int4"
-        ]
-      }
-    },
-    "query": "INSERT INTO RANKINGS(ord, item_id, ballot_id) VALUES ($1, $2, $3)"
-  },
-  "bbeaa0bb00452d955fede7ede4bfed2e43a94eee0cc25b75206ccc0f140169d0": {
+  "5d322f68d0ff767d0a5223077f9040efbb5ae79d3e4d8cfc261a733e78752c73": {
     "describe": {
       "columns": [],
       "nullable": [],
@@ -186,7 +172,21 @@
         ]
       }
     },
-    "query": "INSERT INTO ballots (uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;"
+    "query": "INSERT INTO ballots(uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;"
+  },
+  "5fac21f42352b2b90caccb6b1c2dd5192930df13e58dd4cb3a149d8c04da5c87": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4Array",
+          "Int4Array",
+          "Int4Array"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO rankings(ord, item_id, ballot_id) SELECT * FROM\n            UNNEST($1::integer[], $2::integer[], $3::integer[]) AS t(ord, item_id, ballot_id);\n            "
   },
   "d88e1c332bc300cea5c9d2d5d60519e3ddc5822836ccaadf29cb9a1de1a4a509": {
     "describe": {

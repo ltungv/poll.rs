@@ -87,17 +87,44 @@ impl repository::RankingRepository for RankingRepository {
 
 #[async_trait]
 impl repository::TransactableRankingRepository for RankingRepository {
-    #[tracing::instrument(skip(self, txn))]
-    async fn txn_create(
+    #[tracing::instrument(
+        skip(self, rankings, txn),
+        fields(
+            orderings=tracing::field::Empty,
+            item_ids=tracing::field::Empty,
+            ballot_ids=tracing::field::Empty,
+        )
+    )]
+    async fn txn_create_bulk<I>(
         &self,
-        ranking: NewRanking,
         txn: &mut Self::Txn,
-    ) -> Result<(), RepositoryError> {
+        rankings: I,
+    ) -> Result<(), RepositoryError>
+    where
+        I: Iterator<Item = NewRanking> + Send,
+    {
+        let mut orderings = Vec::new();
+        let mut item_ids = Vec::new();
+        let mut ballot_ids = Vec::new();
+        for r in rankings {
+            orderings.push(r.ord);
+            item_ids.push(r.item_id);
+            ballot_ids.push(r.ballot_id);
+        }
+
+        tracing::Span::current()
+            .record("orderings", &tracing::field::display(orderings.len()))
+            .record("item_ids", &tracing::field::display(item_ids.len()))
+            .record("ballot_ids", &tracing::field::display(ballot_ids.len()));
+
         sqlx::query!(
-            "INSERT INTO RANKINGS(ord, item_id, ballot_id) VALUES ($1, $2, $3)",
-            ranking.ord,
-            ranking.item_id,
-            ranking.ballot_id
+            r#"
+            INSERT INTO rankings(ord, item_id, ballot_id) SELECT * FROM
+            UNNEST($1::integer[], $2::integer[], $3::integer[]) AS t(ord, item_id, ballot_id);
+            "#,
+            &orderings,
+            &item_ids,
+            &ballot_ids
         )
         .execute(txn)
         .await?;
@@ -106,10 +133,10 @@ impl repository::TransactableRankingRepository for RankingRepository {
     }
 
     #[tracing::instrument(skip(self, txn))]
-    async fn txn_remove_all_ballot_rankings(
+    async fn txn_remove_ballot_rankings(
         &self,
-        ballot_id: i32,
         txn: &mut Self::Txn,
+        ballot_id: i32,
     ) -> Result<(), RepositoryError> {
         sqlx::query!(
             "DELETE FROM rankings WHERE rankings.ballot_id = $1;",

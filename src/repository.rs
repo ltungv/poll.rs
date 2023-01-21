@@ -43,16 +43,18 @@ pub trait BallotRepository: Clone + Send + Sync {
 
 #[async_trait]
 pub trait TransactableRankingRepository: Transact + RankingRepository {
-    async fn txn_create(
+    async fn txn_create_bulk<I>(
         &self,
-        ranking: NewRanking,
         txn: &mut Self::Txn,
-    ) -> Result<(), RepositoryError>;
+        rankings: I,
+    ) -> Result<(), RepositoryError>
+    where
+        I: Iterator<Item = NewRanking> + Send;
 
-    async fn txn_remove_all_ballot_rankings(
+    async fn txn_remove_ballot_rankings(
         &self,
-        ballot_id: i32,
         txn: &mut Self::Txn,
+        ballot_id: i32,
     ) -> Result<(), RepositoryError>;
 }
 

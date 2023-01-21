@@ -32,7 +32,7 @@ impl repository::BallotRepository for BallotRepository {
     #[tracing::instrument(skip(self))]
     async fn create(&self, uuid: Uuid) -> Result<(), RepositoryError> {
         sqlx::query!(
-            "INSERT INTO ballots (uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;",
+            "INSERT INTO ballots(uuid) VALUES ($1) ON CONFLICT (uuid) DO NOTHING;",
             uuid
         )
         .execute(&self.pool)
