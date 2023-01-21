@@ -1,4 +1,5 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_identity::Identity;
+use actix_web::{web, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tracing::log::{log, Level};
 use uuid::Uuid;
@@ -9,7 +10,7 @@ use crate::{
     service::{BallotService, ItemService, RankingService},
 };
 
-use super::{RouteError, IDENTITY_COOKIE_NAME};
+use super::RouteError;
 
 #[derive(Serialize)]
 struct BallotViewContext {
@@ -20,7 +21,7 @@ struct BallotViewContext {
 }
 
 pub async fn get<IS, BS, RS>(
-    request: HttpRequest,
+    identity: Option<Identity>,
     app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
 where
@@ -28,12 +29,12 @@ where
     BS: BallotService,
     RS: RankingService,
 {
-    let cookie = match request.cookie(IDENTITY_COOKIE_NAME) {
-        Some(c) => c,
+    let identity = match identity {
+        Some(id) => id,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
 
-    let uuid = match Uuid::parse_str(cookie.value()) {
+    let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
         Ok(u) => u,
         Err(err) => {
             log!(Level::Error, "{}", err);
@@ -67,7 +68,7 @@ pub struct BallotUpdateContext {
 }
 
 pub async fn post<IS, BS, RS>(
-    request: HttpRequest,
+    identity: Option<Identity>,
     ballot_update_data: web::Json<BallotUpdateContext>,
     app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
@@ -75,12 +76,12 @@ where
     BS: BallotService,
     RS: RankingService,
 {
-    let cookie = match request.cookie(IDENTITY_COOKIE_NAME) {
-        Some(c) => c,
+    let identity = match identity {
+        Some(id) => id,
         None => return Ok(HttpResponse::Unauthorized().finish()),
     };
 
-    let uuid = match Uuid::parse_str(cookie.value()) {
+    let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
         Ok(u) => u,
         Err(err) => {
             log!(Level::Error, "{}", err);

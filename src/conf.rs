@@ -99,6 +99,7 @@ pub struct ApplicationConfiguration {
     host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
+    hmac_secret: Secret<String>,
     template_directory: PathBuf,
     template_file_extension: String,
 }
@@ -106,6 +107,10 @@ pub struct ApplicationConfiguration {
 impl ApplicationConfiguration {
     pub fn address(&self) -> String {
         format!("{}:{}", self.host, self.port)
+    }
+
+    pub fn hmac_secret(&self) -> &Secret<String> {
+        &self.hmac_secret
     }
 
     pub fn template_directory(&self) -> &Path {

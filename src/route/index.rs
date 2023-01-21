@@ -1,4 +1,5 @@
-use actix_web::{http::header, web, HttpRequest, HttpResponse};
+use actix_identity::Identity;
+use actix_web::{http::header, web, HttpResponse};
 use serde::Serialize;
 use tracing::log::{log, Level};
 use uuid::Uuid;
@@ -9,7 +10,7 @@ use crate::{
     service::{BallotService, RankingService},
 };
 
-use super::{RouteError, IDENTITY_COOKIE_NAME};
+use super::RouteError;
 
 #[derive(Serialize)]
 struct IndexContext {
@@ -17,16 +18,16 @@ struct IndexContext {
 }
 
 pub async fn get<IS, BS, RS>(
-    request: HttpRequest,
+    identity: Option<Identity>,
     app_ctx: web::Data<ApplicationContext<'_, IS, BS, RS>>,
 ) -> Result<HttpResponse, RouteError>
 where
     BS: BallotService,
     RS: RankingService,
 {
-    if let Some(cookie) = request.cookie(IDENTITY_COOKIE_NAME) {
+    if let Some(identity) = identity {
         {
-            let uuid = match Uuid::parse_str(cookie.value()) {
+            let uuid = match Uuid::parse_str(identity.id()?.as_str()) {
                 Ok(u) => u,
                 Err(err) => {
                     log!(Level::Error, "{}", err);

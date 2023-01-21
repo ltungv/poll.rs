@@ -13,6 +13,13 @@ use crate::{
 use actix_web::dev::Server;
 use handlebars::Handlebars;
 
+pub type DefaultApplicationContext<'a> = ApplicationContext<
+    'a,
+    ItemService<ItemRepository>,
+    BallotService<BallotRepository>,
+    RankingService<RankingRepository>,
+>;
+
 pub struct ApplicationContext<'a, IS, BS, RS>
 where
     IS: 'a,
@@ -25,21 +32,33 @@ where
     ranking_service: RS,
 }
 
-impl<'a, IS, BS, RS> ApplicationContext<'a, IS, BS, RS> {
-    fn new(
-        handlebars: Handlebars<'a>,
-        item_service: IS,
-        ballot_service: BS,
-        ranking_service: RS,
-    ) -> Self {
-        Self {
+impl DefaultApplicationContext<'_> {
+    pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
+        let mut handlebars = Handlebars::new();
+        handlebars.register_templates_directory(
+            configuration.application().template_file_extension(),
+            configuration.application().template_directory(),
+        )?;
+
+        let db_pool = configuration.database().pg_pool();
+        let item_repository = ItemRepository::new(db_pool.clone());
+        let ballot_repository = BallotRepository::new(db_pool.clone());
+        let ranking_repository = RankingRepository::new(db_pool);
+
+        let item_service = ItemService::new(item_repository);
+        let ballot_service = BallotService::new(ballot_repository);
+        let ranking_service = RankingService::new(ranking_repository);
+
+        Ok(Self {
             handlebars,
             item_service,
             ballot_service,
             ranking_service,
-        }
+        })
     }
+}
 
+impl<'a, IS, BS, RS> ApplicationContext<'a, IS, BS, RS> {
     pub fn handlebars(&self) -> &Handlebars {
         &self.handlebars
     }
@@ -63,25 +82,8 @@ pub struct Application {
 
 impl Application {
     pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
-        let mut handlebars = Handlebars::new();
-        handlebars.register_templates_directory(
-            configuration.application().template_file_extension(),
-            configuration.application().template_directory(),
-        )?;
-
-        let db_pool = configuration.database().pg_pool();
-        let item_repository = ItemRepository::new(db_pool.clone());
-        let ballot_repository = BallotRepository::new(db_pool.clone());
-        let ranking_repository = RankingRepository::new(db_pool);
-
-        let item_service = ItemService::new(item_repository);
-        let ballot_service = BallotService::new(ballot_repository);
-        let ranking_service = RankingService::new(ranking_repository);
-
-        let app_ctx =
-            ApplicationContext::new(handlebars, item_service, ballot_service, ranking_service);
-        let server = route::serve(&configuration.application().address(), app_ctx)?;
-
+        let app_ctx = ApplicationContext::new(configuration)?;
+        let server = route::serve(configuration, app_ctx)?;
         Ok(Application { server })
     }
 
