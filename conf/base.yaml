@@ -2,7 +2,7 @@ application:
   port: 8000
   host: 0.0.0.0
   hmac_secret: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
-  template_directory: static/template
+  template_directory: templates
   template_file_extension: .html
 database:
   host: 127.0.0.1
