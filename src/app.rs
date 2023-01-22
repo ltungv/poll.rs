@@ -1,13 +1,8 @@
 use crate::{
     conf::Configuration,
-    repository::{
-        ballot_repository::BallotRepository, item_repository::ItemRepository,
-        ranking_repository::RankingRepository,
-    },
+    repository::{ballot::BallotRepository, item::ItemRepository, ranking::RankingRepository},
     route,
-    service::{
-        ballot_service::BallotService, item_service::ItemService, ranking_service::RankingService,
-    },
+    service::{ballot::BallotService, item::ItemService, ranking::RankingService},
 };
 
 use actix_web::dev::Server;

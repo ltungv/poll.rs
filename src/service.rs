@@ -6,9 +6,9 @@ use crate::{
     repository::RepositoryError,
 };
 
-pub mod ballot_service;
-pub mod item_service;
-pub mod ranking_service;
+pub mod ballot;
+pub mod item;
+pub mod ranking;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServiceError {

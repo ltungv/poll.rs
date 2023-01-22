@@ -1,6 +1,6 @@
-pub mod ballot_repository;
-pub mod item_repository;
-pub mod ranking_repository;
+pub mod ballot;
+pub mod item;
+pub mod ranking;
 
 use async_trait::async_trait;
 use uuid::Uuid;

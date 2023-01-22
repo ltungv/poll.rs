@@ -1,1 +1,1 @@
-pub mod redirect_middleware;
+pub mod redirect;
