@@ -1,0 +1,7 @@
+<div class="m-2">
+  <% for msg in flashes.iter() { %>
+    <div class="<%= Self::notification_class(msg.level()) %>">
+      <p><%= msg.content() %></p>
+    </div>
+  <% } %>
+</div>

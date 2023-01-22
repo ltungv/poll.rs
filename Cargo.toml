@@ -9,6 +9,7 @@ edition = "2021"
 actix-identity = "0.5"
 actix-session = { version = "0.7", features = ["cookie-session"] }
 actix-web = "4"
+actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
 anyhow = "1"
 async-trait = "0.1"
 config = { version = "0.13", features = ["yaml"] }

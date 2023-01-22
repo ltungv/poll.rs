@@ -14,6 +14,8 @@
 </head>
 
 <body>
+	<%- flash_messages_view.render_once()? %>
+
 	<section class="section">
 		<p class="title">This is our current best option</p>
 		<%- best_item_view.render_once()? %>

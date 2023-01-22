@@ -1,7 +1,6 @@
 application:
   port: 8000
   host: 0.0.0.0
-  hmac_secret: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
   template_directory: templates
   template_file_extension: .html
 database:
@@ -15,4 +14,4 @@ tracing:
   service_name: poll
   jaeger_enabled: true
   jaeger_endpoint: localhost:6831
-  log_level: INFO
+  log_level: debug

@@ -1,4 +1,8 @@
+application:
+  flash_message_minimum_level: Debug
+  hmac_secret: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
 database:
   require_ssl: false
 tracing:
   jaeger_enabled: true
+  log_level: debug

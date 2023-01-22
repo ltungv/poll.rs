@@ -5,8 +5,12 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
     cookie,
     dev::{ResourceDef, Server, ServiceRequest},
-    web, App, HttpServer, ResponseError,
+    ResponseError,
 };
+use actix_web::{web, App, HttpServer};
+use actix_web_flash_messages::storage::CookieMessageStore;
+use actix_web_flash_messages::FlashMessagesFramework;
+use opentelemetry::sdk::trace::config;
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
@@ -43,17 +47,18 @@ where
     BS: 'static + service::BallotService,
     RS: 'static + service::RankingService,
 {
-    let hmac_secret = cookie::Key::from(
-        config
-            .application()
-            .hmac_secret()
-            .expose_secret()
-            .as_bytes(),
-    );
+    let config = config.clone();
     let listener = TcpListener::bind(config.application().address())?;
     let server = HttpServer::new(move || {
         let is_indentified = |r: &ServiceRequest| r.get_identity().is_ok();
         let is_unindentified = |r: &ServiceRequest| r.get_identity().is_err();
+        let signing_key = cookie::Key::from(
+            config
+                .application()
+                .hmac_secret()
+                .expose_secret()
+                .as_bytes(),
+        );
         App::new()
             .app_data(web::Data::new(item_service.clone()))
             .app_data(web::Data::new(ballot_service.clone()))
@@ -73,11 +78,21 @@ where
                 is_unindentified,
                 &[ResourceDef::new("/ballot")],
             ))
+            .wrap(
+                FlashMessagesFramework::builder(
+                    CookieMessageStore::builder(signing_key.clone()).build(),
+                )
+                .minimum_level(config.application().flash_message_minimum_level())
+                .build(),
+            )
             .wrap(IdentityMiddleware::default())
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(),
-                hmac_secret.clone(),
-            ))
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), signing_key)
+                    .cookie_secure(true)
+                    .cookie_http_only(true)
+                    .cookie_path("/".to_string())
+                    .build(),
+            )
             .route("/", web::get().to(index::get::<RS>))
             .route("/login", web::post().to(login::post::<IS, BS, RS>))
             .route("/register", web::post().to(register::post::<IS, BS, RS>))

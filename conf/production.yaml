@@ -1,4 +1,7 @@
+application:
+  flash_message_minimum_level: Info
 database:
   require_ssl: true
 tracing:
   jaeger_enabled: false
+  log_level: info

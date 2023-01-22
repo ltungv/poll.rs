@@ -89,6 +89,7 @@ pub struct ApplicationConfiguration {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
     hmac_secret: Secret<String>,
+    flash_message_minimum_level: actix_web_flash_messages::Level,
     template_directory: PathBuf,
     template_file_extension: String,
 }
@@ -100,6 +101,10 @@ impl ApplicationConfiguration {
 
     pub fn hmac_secret(&self) -> &Secret<String> {
         &self.hmac_secret
+    }
+
+    pub fn flash_message_minimum_level(&self) -> actix_web_flash_messages::Level {
+        self.flash_message_minimum_level
     }
 
     pub fn template_directory(&self) -> &Path {
