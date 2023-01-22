@@ -20,9 +20,6 @@ services:
       # All incoming requests should be routed to our app
       - path: /
     envs:
-      - key: POLL_LOG
-        value: ${POLL_LOG}
-        scope: RUN_TIME
       - key: POLL__DATABASE__HOST
         value: ${poll-database-postgres.HOSTNAME}
         scope: RUN_TIME
