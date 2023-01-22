@@ -10,7 +10,6 @@ use actix_web::{
 use actix_web::{web, App, HttpServer};
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
-use opentelemetry::sdk::trace::config;
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
