@@ -7,7 +7,6 @@ use actix_web::{
     dev::{ResourceDef, Server, ServiceRequest},
     web, App, HttpServer, ResponseError,
 };
-use handlebars::Handlebars;
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
@@ -22,7 +21,7 @@ pub mod register;
 #[derive(thiserror::Error, Debug)]
 pub enum RouteError {
     #[error(transparent)]
-    HandlebarsRender(#[from] handlebars::RenderError),
+    SailfishRender(#[from] sailfish::RenderError),
 
     #[error(transparent)]
     Service(#[from] service::ServiceError),
@@ -35,7 +34,6 @@ impl ResponseError for RouteError {}
 
 pub fn serve<IS, BS, RS>(
     config: &Configuration,
-    handlebars: Handlebars<'static>,
     item_service: IS,
     ballot_service: BS,
     ranking_service: RS,
@@ -52,13 +50,11 @@ where
             .expose_secret()
             .as_bytes(),
     );
-    let handlebars = web::Data::new(handlebars);
     let listener = TcpListener::bind(config.application().address())?;
     let server = HttpServer::new(move || {
         let is_indentified = |r: &ServiceRequest| r.get_identity().is_ok();
         let is_unindentified = |r: &ServiceRequest| r.get_identity().is_err();
         App::new()
-            .app_data(handlebars.clone())
             .app_data(web::Data::new(item_service.clone()))
             .app_data(web::Data::new(ballot_service.clone()))
             .app_data(web::Data::new(ranking_service.clone()))

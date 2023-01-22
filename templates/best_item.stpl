@@ -1,0 +1,8 @@
+<div class="box">
+  <% if let Some(it) = best_item { %>
+    <p class="title"><%= it.title %></p>
+    <p class="subtitle"><%= it.content %></p>
+  <% } else { %>
+    <p class="subtitle">Nothing yet :(</p>
+  <% } %>
+</div>

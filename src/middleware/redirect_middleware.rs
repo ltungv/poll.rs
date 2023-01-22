@@ -74,7 +74,7 @@ where
             .any(|res| res.is_match(request.path()));
         let match_predicate = (self.predicate)(&request);
 
-        tracing::info!(%match_resource, %match_predicate, path = %request.path(), "calling redirect middleware");
+        tracing::debug!(%match_resource, %match_predicate, path = %request.path(), "calling redirect middleware");
 
         if match_resource && match_predicate {
             let (request, _pl) = request.into_parts();

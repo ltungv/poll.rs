@@ -11,7 +11,6 @@ use crate::{
 };
 
 use actix_web::dev::Server;
-use handlebars::Handlebars;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
 
 pub struct Application {
@@ -20,12 +19,6 @@ pub struct Application {
 
 impl Application {
     pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
-        let mut handlebars = Handlebars::new();
-        handlebars.register_templates_directory(
-            configuration.application().template_file_extension(),
-            configuration.application().template_directory(),
-        )?;
-
         let db_pool = PgPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_secs(2))
             .connect_lazy_with(
@@ -50,13 +43,7 @@ impl Application {
         let ballot_service = BallotService::new(ballot_repository);
         let ranking_service = RankingService::new(ranking_repository);
 
-        let server = route::serve(
-            configuration,
-            handlebars,
-            item_service,
-            ballot_service,
-            ranking_service,
-        )?;
+        let server = route::serve(configuration, item_service, ballot_service, ranking_service)?;
 
         Ok(Application { server })
     }

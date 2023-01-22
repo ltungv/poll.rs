@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<% include!("header.stpl"); %>
+	<style>
+		#ballot-ranked-unranked-delim {
+			background-color: #AAAAAA;
+		}
+		#ballot-ranked-unranked-delim ~ .list-group-item {
+			background-color: #AAAAAA;
+		}
+	</style>
+</head>
+
+<body>
+	<section class="section">
+		<p class="title">This is our current best option</p>
+		<%- best_item_view.render_once()? %>
+
+		<p class="title mt-6">Your rankings (<%= uuid.to_string() %>)</p>
+		<div id="ballot-rankings-container" class="list-group">
+			<% for it in ranked_items.iter() { %>
+				<div data-id="<%= it.id %>" class="list-group-item box mt-1 mb-1">
+					<p class="title"><%= it.title %></p>
+					<p class="subtitle"><%= it.content %></p>
+				</div>
+			<% } %>
+
+			<div data-id="delimiter" 
+				id="ballot-ranked-unranked-delim" 
+				class="box mt-1 mb-1">
+				<p class="subtitle">ITEMS BELOW THIS IS NOT RANKED</p>
+			</div>
+
+			<% for it in unranked_items.iter() { %>
+				<div data-id="<%= it.id %>" class="list-group-item box mt-1 mb-1">
+					<p class="title"><%= it.title %></p>
+					<p class="subtitle"><%= it.content %></p>
+				</div>
+			<% } %>
+		</div>
+	</section>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js">
+</script>
+
+<script>
+let sortable_item_ids = Sortable.create(
+	document.getElementById('ballot-rankings-container'), {
+		onEnd: evt => {
+			let sorted_item_ids = sortable_item_ids.toArray();
+			let ranked_item_ids = sorted_item_ids
+				.slice(0, sorted_item_ids.indexOf('delimiter'))
+				.map(n => parseInt(n, 10));
+
+			fetch( "/ballot", {
+				method: 'POST', 
+				headers: {
+				  'Content-Type': 'application/json'
+				},
+				redirect: 'follow',
+				body: JSON.stringify({ ranked_item_ids })
+			});
+		},
+	});
+</script>
+
+</html>

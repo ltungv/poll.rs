@@ -8,6 +8,7 @@ pub(crate) mod model;
 pub(crate) mod repository;
 pub(crate) mod route;
 pub(crate) mod service;
+pub(crate) mod view;
 
 pub(crate) const ENV_PREFIX: &str = "POLL";
 pub(crate) const ENV_RUN_MODE: &str = "POLL_RUN_MODE";

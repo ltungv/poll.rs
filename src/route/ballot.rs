@@ -1,28 +1,18 @@
 use actix_identity::Identity;
 use actix_web::{http::header, web, HttpResponse};
-use handlebars::Handlebars;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sailfish::TemplateOnce;
+use serde::Deserialize;
 
 use crate::{
-    model::item::Item,
     service::{BallotService, ItemService, RankingService},
+    view::ballot::BallotView,
 };
 
 use super::RouteError;
 
-#[derive(Serialize)]
-struct BallotViewContext {
-    uuid: Uuid,
-    best_item: Option<Item>,
-    ranked_items: Vec<Item>,
-    unranked_items: Vec<Item>,
-}
-
-#[tracing::instrument(skip(identity, handlebars, item_service, ballot_service, ranking_service))]
+#[tracing::instrument(skip(identity, item_service, ballot_service, ranking_service))]
 pub async fn get<IS, BS, RS>(
     identity: Identity,
-    handlebars: web::Data<Handlebars<'_>>,
     item_service: web::Data<IS>,
     ballot_service: web::Data<BS>,
     ranking_service: web::Data<RS>,
@@ -46,13 +36,8 @@ where
         ranking_service.get_instant_runoff_result(),
         item_service.get_ballot_items(ballot.id)
     )?;
-    let context = BallotViewContext {
-        uuid: ballot.uuid,
-        best_item,
-        ranked_items,
-        unranked_items,
-    };
-    let body = handlebars.render("ballot", &context)?;
+    let body =
+        BallotView::new(&ballot.uuid, &best_item, &ranked_items, &unranked_items).render_once()?;
     Ok(HttpResponse::Ok().body(body))
 }
 
