@@ -21,7 +21,7 @@ services:
       - path: /
     envs:
       - key: POLL__APPLICATION__HMAC_SECRET
-        value: ${POLL__APPLICATION__HMAC_SECRET}
+        value: ${POLL_HMAC_SECRET}
         scope: RUN_TIME
         type: SECRET
       - key: POLL__DATABASE__HOST
