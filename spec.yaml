@@ -20,6 +20,9 @@ services:
       # All incoming requests should be routed to our app
       - path: /
     envs:
+      - key: POLL__APPLICATION__HMAC_SECRET
+        value: ${POLL__APPLICATION__HMAC_SECRET}
+        scope: RUN_TIME
       - key: POLL__DATABASE__HOST
         value: ${poll-database-postgres.HOSTNAME}
         scope: RUN_TIME

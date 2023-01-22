@@ -1,8 +1,13 @@
 application:
-  flash_message_minimum_level: Debug
   hmac_secret: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
+  flash_message_minimum_level: Debug
 database:
+  host: 127.0.0.1
+  port: 5432
+  username: admin
+  password: admin
+  database: poll
   require_ssl: false
 tracing:
-  jaeger_enabled: true
   log_level: debug
+  jaeger_endpoint: localhost:6831

@@ -1,13 +1,10 @@
-use std::{
-    io,
-    path::{Path, PathBuf},
-};
+use std::{io, path::Path};
 
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use tracing_subscriber::EnvFilter;
 
-use crate::{CONFIG_BASE_NAME, CONFIG_DIRECTORY, ENV_LOG_FILTER, ENV_PREFIX, ENV_RUN_MODE};
+use crate::{CONFIG_BASE_NAME, CONFIG_DIRECTORY, ENV_PREFIX, ENV_RUN_MODE};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigurationError {
@@ -90,8 +87,6 @@ pub struct ApplicationConfiguration {
     port: u16,
     hmac_secret: Secret<String>,
     flash_message_minimum_level: actix_web_flash_messages::Level,
-    template_directory: PathBuf,
-    template_file_extension: String,
 }
 
 impl ApplicationConfiguration {
@@ -105,14 +100,6 @@ impl ApplicationConfiguration {
 
     pub fn flash_message_minimum_level(&self) -> actix_web_flash_messages::Level {
         self.flash_message_minimum_level
-    }
-
-    pub fn template_directory(&self) -> &Path {
-        &self.template_directory
-    }
-
-    pub fn template_file_extension(&self) -> &str {
-        &self.template_file_extension
     }
 }
 
@@ -157,8 +144,7 @@ impl DatabaseConfiguration {
 pub struct TracingConfiguration {
     service_name: String,
     log_level: String,
-    jaeger_enabled: bool,
-    jaeger_endpoint: String,
+    jaeger_endpoint: Option<String>,
 }
 
 impl TracingConfiguration {
@@ -167,14 +153,10 @@ impl TracingConfiguration {
     }
 
     pub fn env_filter(&self) -> EnvFilter {
-        EnvFilter::try_from_env(ENV_LOG_FILTER).unwrap_or_else(|_| EnvFilter::new(&self.log_level))
+        EnvFilter::new(&self.log_level)
     }
 
-    pub fn jaeger_enabled(&self) -> bool {
-        self.jaeger_enabled
-    }
-
-    pub fn jaeger_endpoint(&self) -> &str {
+    pub fn jaeger_endpoint(&self) -> &Option<String> {
         &self.jaeger_endpoint
     }
 }

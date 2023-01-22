@@ -3,5 +3,4 @@ application:
 database:
   require_ssl: true
 tracing:
-  jaeger_enabled: false
   log_level: info

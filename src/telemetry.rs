@@ -38,12 +38,13 @@ fn otel_jaeger_tracing_layer<S>(
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
-    if !config.jaeger_enabled() {
-        return Ok(None);
-    }
+    let jaeger_endpoint = match config.jaeger_endpoint() {
+        None => return Ok(None),
+        Some(v) => v,
+    };
     global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
     opentelemetry_jaeger::new_agent_pipeline()
-        .with_endpoint(config.jaeger_endpoint())
+        .with_endpoint(jaeger_endpoint)
         .with_service_name(config.service_name())
         .with_max_packet_size(16_384)
         .with_auto_split_batch(true)
