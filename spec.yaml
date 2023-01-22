@@ -23,6 +23,7 @@ services:
       - key: POLL__APPLICATION__HMAC_SECRET
         value: ${POLL__APPLICATION__HMAC_SECRET}
         scope: RUN_TIME
+        type: SECRET
       - key: POLL__DATABASE__HOST
         value: ${poll-database-postgres.HOSTNAME}
         scope: RUN_TIME
@@ -35,6 +36,7 @@ services:
       - key: POLL__DATABASE__PASSWORD
         value: ${poll-database-postgres.PASSWORD}
         scope: RUN_TIME
+        type: SECRET
       - key: POLL__DATABASE__DATABASE
         value: ${poll-database-postgres.DATABASE}
         scope: RUN_TIME
