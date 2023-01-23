@@ -2,7 +2,10 @@
 
 A simple web-application for electing the best option using the [instant-runoff] voting system.
 
+![register and vote example]
+
 [instant-runoff]: https://en.wikipedia.org/wiki/Instant-runoff_voting
+[register and vote example]: docs/register_and_vote.gif
 
 # Features
 
