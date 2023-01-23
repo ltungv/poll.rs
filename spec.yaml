@@ -32,7 +32,6 @@ services:
       - key: POLL__DATABASE__PASSWORD
         value: ${poll-database-postgres.PASSWORD}
         scope: RUN_TIME
-        type: SECRET
       - key: POLL__DATABASE__DATABASE
         value: ${poll-database-postgres.DATABASE}
         scope: RUN_TIME
