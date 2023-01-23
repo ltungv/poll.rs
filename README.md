@@ -1,56 +1,44 @@
 # Poll.rs
 
-A simple web-application for ranking options based on users' votes. The app 
-can take a list of options and chooses the most preferred option using the
-[instant-runoff voting] system, a type of [ranked preferential] voting counting
-method.
+A simple web-application for electing the best option using the [instant-runoff] voting system.
 
-[instant-runoff voting]: https://en.wikipedia.org/wiki/Instant-runoff_voting
-[ranked preferential]: https://en.wikipedia.org/wiki/Ranked_voting
+[instant-runoff]: https://en.wikipedia.org/wiki/Instant-runoff_voting
 
 # Features
 
-## Test drive
+No need for serious security and users are allowed to change their rankings.
++ Each user is assigned an UUID after they register.
++ The UUID can later be used to access existing rankings.
++ Users' account has no password.
++ Users' session is kept in using cookie.
 
-- No need for serious security/authentication.
-- Users are allowed to change their ranking.
-	- Use some kind of unique ID and storage system to identify the user the 
-	next time they access the poll
-		- Session?
-		- Browser storage?
+# Tech stack
 
-### Some initial state
++ Server: [actix-web]
++ Database: [sqlx]
++ Template: [sailfish]
++ Observability: [tracing], [opentelemetry]
+
+[actix-web]: https://github.com/actix/actix-web
+[sqlx]: https://github.com/launchbadge/sqlx
+[sailfish]: https://github.com/launchbadge/sqlx
+[tracing]: https://github.com/tokio-rs/tracing
+[opentelemetry]: https://github.com/open-telemetry/opentelemetry-rust
+
+# Some initial state
 
 ```
 insert into items(title, content) values
-	('Title 1', 'This is not very interesting'),
-	('Title 2', 'This is somewhat inteteresting'),
-	('Title 3', 'This is very interesting');
+	('Ada Lovelace', 'Augusta Ada King, Countess of Lovelace was an English mathematician and writer.'),
+	('Alan Turing', 'Alan Mathison Turing OBE FRS was an English mathematician, computer scientist, logician, cryptanalyst, philosopher, and theoretical biologist.');
+
 insert into ballots(uuid) values
 	(gen_random_uuid()),
-	(gen_random_uuid()),
-	(gen_random_uuid()),
-	(gen_random_uuid()),
 	(gen_random_uuid());
+
 insert into rankings(ballot_id,item_id,ord) values
 	(1,1,0),
 	(1,2,1),
-	(1,3,2);
-insert into rankings(ballot_id,item_id,ord) values
 	(2,1,1),
-	(2,2,0),
-	(2,3,2);
-insert into rankings(ballot_id,item_id,ord) values
-	(3,1,1),
-	(3,2,2),
-	(3,3,0);
-insert into rankings(ballot_id,item_id,ord) values
-	(4,3,0),
-	(4,1,2),
-	(4,2,1);
-insert into rankings(ballot_id,item_id,ord) values
-	(5,1,1),
-	(5,2,2),
-	(5,3,0);
+	(2,2,0);
 ```
-
