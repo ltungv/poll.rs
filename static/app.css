@@ -1,0 +1,21 @@
+/* Hide scrollbar for Chrome, Safari and Opera */
+html::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  /* IE and Edge */
+  -ms-overflow-style: none;
+  /* Firefox */
+  scrollbar-width: none;
+}
+
+/* Hightlight the delimiter */
+#ballot-rankings-delimiter {
+  background-color: #AAAAAA;
+}
+/* Hightlight items bellow the delimiter */
+#ballot-rankings-delimiter ~ .ballot-rankings-item {
+  background-color: #AAAAAA;
+}

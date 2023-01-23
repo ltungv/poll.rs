@@ -3,7 +3,6 @@
 
 <head>
 	<% include!("header.stpl"); %>
-	<link rel="stylesheet" href="/static/ballot.css">
 </head>
 
 <body>
