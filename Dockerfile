@@ -1,8 +1,25 @@
 # ================================================
 # cargo-chef template
 # ================================================
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+FROM rust:latest as chef
 WORKDIR /poll
+# install neccessary dependencies
+RUN apt-get clean \
+&& apt-get update -y \
+&& apt-get install -y lld clang \
+&& cargo install cargo-chef \
+&& update-ca-certificates
+# Create appuser
+ENV USER=poll
+ENV UID=10001
+RUN adduser \
+--disabled-password \
+--gecos "" \
+--home "/nonexistent" \
+--shell "/sbin/nologin" \
+--no-create-home \
+--uid "${UID}" \
+"${USER}"
 
 # ================================================
 # cargo-chef prepare
