@@ -58,6 +58,7 @@ where
         ballot_id: i32,
         ranked_item_ids: &[i32],
     ) -> Result<(), ServiceError> {
+        // START TRANSACTION
         let mut txn = self.ranking_repository.begin().await?;
 
         self.ranking_repository
@@ -76,6 +77,7 @@ where
             )
             .await?;
 
+        // END TRANSACTION
         self.ranking_repository.end(txn).await?;
         Ok(())
     }
