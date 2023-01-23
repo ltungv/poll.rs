@@ -1,44 +1,43 @@
-#! spec.yaml
-
+databases:
+- engine: PG
+  name: poll-database-postgres
+  num_nodes: 1
+  size: db-s-dev-database
+  version: "12"
 name: poll
 region: sgp
-
 services:
-  - name: poll-web-service
-    dockerfile_path: Dockerfile
-    source_dir: .
-    github:
-      branch: master
-      deploy_on_push: true
-      repo: letung3105/poll.rs
-    health_check:
-      http_path: /health
-    http_port: 8000
-    instance_count: 1
-    instance_size_slug: basic-xxs
-    routes:
-      # All incoming requests should be routed to our app
-      - path: /
-    envs:
-      - key: POLL__DATABASE__HOST
-        value: ${poll-database-postgres.HOSTNAME}
-        scope: RUN_TIME
-      - key: POLL__DATABASE__PORT
-        value: ${poll-database-postgres.PORT}
-        scope: RUN_TIME
-      - key: POLL__DATABASE__USERNAME
-        value: ${poll-database-postgres.USERNAME}
-        scope: RUN_TIME
-      - key: POLL__DATABASE__PASSWORD
-        value: ${poll-database-postgres.PASSWORD}
-        scope: RUN_TIME
-      - key: POLL__DATABASE__DATABASE
-        value: ${poll-database-postgres.DATABASE}
-        scope: RUN_TIME
-
-databases:
-  - engine: PG
-    name: poll-database-postgres
-    num_nodes: 1
-    size: db-s-dev-database
-    version: "12"
+- dockerfile_path: Dockerfile
+  envs:
+  - key: POLL__APPLICATION__HMAC_SECRET
+    scope: RUN_TIME
+    type: SECRET
+    value: EV[1:8NJGEzfgREss9N/Eqmzzhj3ErxkbzfUN:0OPMN3Bwr9N3EQIdAe6VdS/dWczvmEeibACvqqL4XB88GHCjyyQ8txpNRYsR8XrOARfK/JBWZLFGo/ZswbCx8aOTjCdd/T19O4EP0xE69pk=]
+  - key: POLL__DATABASE__HOST
+    scope: RUN_TIME
+    value: ${poll-database-postgres.HOSTNAME}
+  - key: POLL__DATABASE__PORT
+    scope: RUN_TIME
+    value: ${poll-database-postgres.PORT}
+  - key: POLL__DATABASE__USERNAME
+    scope: RUN_TIME
+    value: ${poll-database-postgres.USERNAME}
+  - key: POLL__DATABASE__PASSWORD
+    scope: RUN_TIME
+    value: ${poll-database-postgres.PASSWORD}
+  - key: POLL__DATABASE__DATABASE
+    scope: RUN_TIME
+    value: ${poll-database-postgres.DATABASE}
+  github:
+    branch: master
+    deploy_on_push: true
+    repo: letung3105/poll.rs
+  health_check:
+    http_path: /health
+  http_port: 8000
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  name: poll-web-service
+  routes:
+  - path: /
+  source_dir: .
