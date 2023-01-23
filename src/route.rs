@@ -102,8 +102,8 @@ where
                     .route(web::get().to(ballot::get::<IS, BS, RS>))
                     .route(web::post().to(ballot::post::<BS, RS>)),
             )
-            .service(Files::new("/static/css", "static/css").show_files_listing())
-            .service(Files::new("/static/js", "static/js").show_files_listing())
+            .service(Files::new("/static/css", "./static/css").show_files_listing())
+            .service(Files::new("/static/js", "./static/js").show_files_listing())
     })
     .listen(listener)?
     .run();
