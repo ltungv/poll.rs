@@ -3,7 +3,7 @@
 
 <head>
 	<% include!("header.stpl"); %>
-	<link rel="stylesheet" href="/static/css/ballot.css">
+	<link rel="stylesheet" href="/static/ballot.css">
 </head>
 
 <body>
@@ -22,7 +22,7 @@
 				</div>
 			<% } %>
 
-			<div data-id="delimiter" class="ballot-rankings-delimiter box mt-1 mb-1">
+			<div data-id="delimiter" id="ballot-rankings-delimiter" class="box mt-1 mb-1">
 				<p class="subtitle">ITEMS BELOW THIS IS NOT RANKED</p>
 			</div>
 
@@ -37,6 +37,6 @@
 </body>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="/static/js/ballot.js"></script>
+<script src="/static/ballot.js"></script>
 
 </html>
