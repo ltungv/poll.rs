@@ -14,6 +14,9 @@ pub mod ranking;
 pub enum ServiceError {
     #[error(transparent)]
     Repository(#[from] RepositoryError),
+
+    #[error(transparent)]
+    Uuid(#[from] uuid::Error),
 }
 
 #[async_trait]
@@ -26,9 +29,8 @@ pub trait ItemService: Clone + Send + Sync {
 
 #[async_trait]
 pub trait BallotService: Clone + Send + Sync {
-    /// Register a new ballot with the given string creating a new random UUID
-    /// if the string is not a valid UUID. If the UUID already exists, do nothing
-    /// and simply return it back to the caller.
+    /// Register a new ballot with the given string; the string must be a valid UUID
+    /// If the UUID already exists, do nothing and simply return it back to the caller.
     async fn register(&self, uuid: &str) -> Result<Uuid, ServiceError>;
 
     /// Find new ballot with the given string and guaranteed to return `None`

@@ -3,6 +3,13 @@
 
 <head>
 	<% include!("header.stpl"); %>
+	<link 
+		rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+		integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
+		crossorigin="anonymous"
+		referrerpolicy="no-referrer"
+	/>
 </head>
 
 <body>
@@ -12,20 +19,32 @@
 		<p class="title">This is our current best option</p>
 		<%- best_item_view.render_once()? %>
 
-		<form method="POST">
-			<div class="field is-grouped">
+		<form method="POST" action="/register">
+			<div class="field has-addons">
 				<div class="control">
-					<input class="input" name="uuid" type="text" placeholder="A unique id"/>
+					<button type="button" class="button" onclick="handleClickBallotRegisterButton()">
+						<span class="icon">
+							<i class="fas fa-arrows-rotate"></i>
+						</span>
+					</button>
 				</div>
 				<div class="control">
-					<button class="button is-link" type="submit" formaction="/login">Cast your ballot</button>
+					<input 
+						id="ballot-uuid-input"
+						class="input"
+						name="uuid"
+						type="text"
+						placeholder="A unique id"
+					/>
 				</div>
 				<div class="control">
-					<button class="button is-link" type="submit" formaction="/register">Register now!</button>
-				<div class="control">
+					<button class="button is-link" type="submit">Cast your ballot</button>
+				</div>
 			</div>
 		</form>
 	</section>
 </body>
+
+<script src="/static/home.js"></script>
 
 </html>

@@ -38,7 +38,7 @@ pub trait BallotRepository: Clone + Send + Sync {
     async fn find_by_uuid(&self, uuid: Uuid) -> Result<Option<Ballot>, RepositoryError>;
 
     /// Create a new ballot with the given UUID and do nothing if the UUID already exists.
-    async fn create(&self, uuid: Uuid) -> Result<(), RepositoryError>;
+    async fn save_ignoring_conflict(&self, uuid: Uuid) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]

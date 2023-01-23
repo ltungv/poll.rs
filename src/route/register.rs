@@ -3,7 +3,7 @@ use actix_web::{http::header, web, HttpMessage, HttpRequest, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
 use serde::Deserialize;
 
-use crate::service::BallotService;
+use crate::service::{BallotService, ServiceError};
 
 use super::RouteError;
 
@@ -21,14 +21,29 @@ pub async fn post<IS, BS, RS>(
 where
     BS: BallotService,
 {
-    let uuid = ballot_service.register(form.uuid.as_str()).await?;
-    Identity::login(&request.extensions(), uuid.to_string())?;
-    FlashMessage::new(
-        "Registered".to_string(),
-        actix_web_flash_messages::Level::Success,
-    )
-    .send();
-    Ok(HttpResponse::SeeOther()
-        .insert_header((header::LOCATION, "/ballot"))
-        .finish())
+    match ballot_service.register(form.uuid.as_str()).await {
+        Ok(uuid) => {
+            Identity::login(&request.extensions(), uuid.to_string())?;
+            FlashMessage::new(
+                "Logged in".to_string(),
+                actix_web_flash_messages::Level::Success,
+            )
+            .send();
+            Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/ballot"))
+                .finish())
+        }
+        Err(ServiceError::Uuid(e)) => {
+            tracing::warn!(error = %e, "Invalid UUID");
+            FlashMessage::new(
+                "Invalid UUID".to_string(),
+                actix_web_flash_messages::Level::Error,
+            )
+            .send();
+            Ok(HttpResponse::SeeOther()
+                .insert_header((header::LOCATION, "/"))
+                .finish())
+        }
+        Err(e) => Err(e.into()),
+    }
 }

@@ -23,23 +23,14 @@ where
 {
     #[tracing::instrument(skip(self))]
     async fn register(&self, uuid: &str) -> Result<Uuid, ServiceError> {
-        let uuid = Uuid::parse_str(uuid).unwrap_or_else(|err| {
-            tracing::warn!(error = %err, "Invalid UUID");
-            Uuid::new_v4()
-        });
-        self.ballot_repository.create(uuid).await?;
+        let uuid = Uuid::parse_str(uuid)?;
+        self.ballot_repository.save_ignoring_conflict(uuid).await?;
         Ok(uuid)
     }
 
     #[tracing::instrument(skip(self))]
     async fn find_ballot(&self, uuid: &str) -> Result<Option<Ballot>, ServiceError> {
-        let uuid = match Uuid::parse_str(uuid) {
-            Ok(v) => v,
-            Err(err) => {
-                tracing::warn!(error = %err, "Invalid UUID");
-                return Ok(None);
-            }
-        };
+        let uuid = Uuid::parse_str(uuid)?;
         let ballot = self.ballot_repository.find_by_uuid(uuid).await?;
         Ok(ballot)
     }
