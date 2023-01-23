@@ -21,18 +21,8 @@ pub async fn post<IS, BS, RS>(
 where
     BS: BallotService,
 {
-    match ballot_service.register(form.uuid.as_str()).await {
-        Ok(uuid) => {
-            Identity::login(&request.extensions(), uuid.to_string())?;
-            FlashMessage::new(
-                "Logged in".to_string(),
-                actix_web_flash_messages::Level::Success,
-            )
-            .send();
-            Ok(HttpResponse::SeeOther()
-                .insert_header((header::LOCATION, "/ballot"))
-                .finish())
-        }
+    let uuid = match ballot_service.register(form.uuid.as_str()).await {
+        Ok(v) => v,
         Err(ServiceError::Uuid(e)) => {
             tracing::warn!(error = %e, "Invalid UUID");
             FlashMessage::new(
@@ -40,10 +30,19 @@ where
                 actix_web_flash_messages::Level::Error,
             )
             .send();
-            Ok(HttpResponse::SeeOther()
+            return Ok(HttpResponse::SeeOther()
                 .insert_header((header::LOCATION, "/"))
-                .finish())
+                .finish());
         }
-        Err(e) => Err(e.into()),
-    }
+        Err(e) => return Err(e.into()),
+    };
+    Identity::login(&request.extensions(), uuid.to_string())?;
+    FlashMessage::new(
+        "Logged in".to_string(),
+        actix_web_flash_messages::Level::Success,
+    )
+    .send();
+    Ok(HttpResponse::SeeOther()
+        .insert_header((header::LOCATION, "/ballot"))
+        .finish())
 }
