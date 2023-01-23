@@ -12,7 +12,7 @@ services:
   - key: POLL__APPLICATION__HMAC_SECRET
     scope: RUN_TIME
     type: SECRET
-    value: EV[1:8NJGEzfgREss9N/Eqmzzhj3ErxkbzfUN:0OPMN3Bwr9N3EQIdAe6VdS/dWczvmEeibACvqqL4XB88GHCjyyQ8txpNRYsR8XrOARfK/JBWZLFGo/ZswbCx8aOTjCdd/T19O4EP0xE69pk=]
+    value: EV[1:XGquz7rooolhylcx1Ne+/oyoDZSXFZ52:yyRFyBMMWljcKDjOlwR9ZAtanxR+V9uwiOXF4z8Hd/RHJYo2HAr/FtQOreimXLspWzpQp/gT/g04tUNHH3zy4klMH5H8/gRXw27DuQlRDQQ=]
   - key: POLL__DATABASE__HOST
     scope: RUN_TIME
     value: ${poll-database-postgres.HOSTNAME}

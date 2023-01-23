@@ -1,6 +1,21 @@
 version: '3'
 
 services:
+  poll:
+    build: .
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - 8000:8000/tcp
+    environment:
+      POLL__APPLICATION__HMAC_SECRET: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
+      POLL__DATABASE__HOST: postgres
+      POLL__DATABASE__PORT: 5432
+      POLL__DATABASE__USERNAME: admin
+      POLL__DATABASE__PASSWORD: admin
+      POLL__DATABASE__DATABASE: poll
+      POLL__DATABASE__REQUIRE_SSL: false
   postgres:
     image: postgres:latest
     restart: always
