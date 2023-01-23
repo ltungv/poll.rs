@@ -1,5 +1,6 @@
 use std::net::TcpListener;
 
+use actix_files::Files;
 use actix_identity::{IdentityExt, IdentityMiddleware};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
@@ -93,6 +94,7 @@ where
                     .build(),
             )
             .route("/", web::get().to(index::get::<RS>))
+            .route("/health", web::get().to(health::get))
             .route("/login", web::post().to(login::post::<IS, BS, RS>))
             .route("/register", web::post().to(register::post::<IS, BS, RS>))
             .service(
@@ -100,7 +102,8 @@ where
                     .route(web::get().to(ballot::get::<IS, BS, RS>))
                     .route(web::post().to(ballot::post::<BS, RS>)),
             )
-            .route("/health", web::get().to(health::get))
+            .service(Files::new("/static/css", "static/css").show_files_listing())
+            .service(Files::new("/static/js", "static/js").show_files_listing())
     })
     .listen(listener)?
     .run();
