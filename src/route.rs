@@ -19,7 +19,6 @@ use crate::{conf::Configuration, middleware::redirect::RedirectMiddleware, servi
 pub mod ballot;
 pub mod health;
 pub mod index;
-pub mod login;
 pub mod register;
 
 #[derive(thiserror::Error, Debug)]
@@ -95,7 +94,6 @@ where
             )
             .route("/", web::get().to(index::get::<RS>))
             .route("/health", web::get().to(health::get))
-            .route("/login", web::post().to(login::post::<IS, BS, RS>))
             .route("/register", web::post().to(register::post::<IS, BS, RS>))
             .service(
                 web::resource("/ballot")
