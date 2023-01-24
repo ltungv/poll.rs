@@ -49,8 +49,8 @@ where
     let config = config.clone();
     let listener = TcpListener::bind(config.application().address())?;
     let server = HttpServer::new(move || {
-        let is_indentified = |r: &ServiceRequest| r.get_identity().is_ok();
-        let is_unindentified = |r: &ServiceRequest| r.get_identity().is_err();
+        let is_identified = |r: &ServiceRequest| r.get_identity().is_ok();
+        let is_unidentified = |r: &ServiceRequest| r.get_identity().is_err();
         let signing_key = cookie::Key::from(
             config
                 .application()
@@ -65,7 +65,7 @@ where
             .wrap(TracingLogger::default())
             .wrap(RedirectMiddleware::new(
                 "/ballot",
-                is_indentified,
+                is_identified,
                 &[
                     ResourceDef::new("/"),
                     ResourceDef::new("/login"),
@@ -74,12 +74,15 @@ where
             ))
             .wrap(RedirectMiddleware::new(
                 "/",
-                is_unindentified,
+                is_unidentified,
                 &[ResourceDef::new("/ballot")],
             ))
             .wrap(
                 FlashMessagesFramework::builder(
-                    CookieMessageStore::builder(signing_key.clone()).build(),
+                    CookieMessageStore::builder(signing_key.clone())
+                        .cookie_name(config.cookie().flash_message_key())
+                        .domain(config.application().domain())
+                        .build(),
                 )
                 .minimum_level(config.application().flash_message_minimum_level())
                 .build(),
