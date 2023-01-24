@@ -7,7 +7,7 @@ services:
     ports:
       - 8000:8000/tcp
     environment:
-      POLL__APPLICATION__DOMAIN: poll
+      POLL__APPLICATION__DOMAIN: localhost
       POLL__APPLICATION__URL: http://localhost:8000
       POLL__COOKIE__SIGNING_KEY: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
       POLL__DATABASE__HOST: postgres
@@ -15,6 +15,7 @@ services:
       POLL__DATABASE__USERNAME: admin
       POLL__DATABASE__PASSWORD: admin
       POLL__DATABASE__DATABASE: poll
+      POLL__DATABASE__REQUIRE_SSL: false
       POLL__TRACING__JAEGER_ENDPOINT: jaeger:6831
 
   postgres:
