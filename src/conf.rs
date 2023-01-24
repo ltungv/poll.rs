@@ -62,6 +62,7 @@ impl<'a> ConfigurationBuilder<'a> {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct Configuration {
     application: ApplicationConfiguration,
+    cookie: CookieConfiguration,
     database: DatabaseConfiguration,
     tracing: TracingConfiguration,
 }
@@ -69,6 +70,10 @@ pub struct Configuration {
 impl Configuration {
     pub fn application(&self) -> &ApplicationConfiguration {
         &self.application
+    }
+
+    pub fn cookie(&self) -> &CookieConfiguration {
+        &self.cookie
     }
 
     pub fn database(&self) -> &DatabaseConfiguration {
@@ -85,7 +90,7 @@ pub struct ApplicationConfiguration {
     host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
-    hmac_secret: Secret<String>,
+    domain: String,
     flash_message_minimum_level: actix_web_flash_messages::Level,
 }
 
@@ -94,12 +99,28 @@ impl ApplicationConfiguration {
         format!("{}:{}", self.host, self.port)
     }
 
-    pub fn hmac_secret(&self) -> &Secret<String> {
-        &self.hmac_secret
+    pub fn domain(&self) -> &str {
+        &self.domain
     }
 
     pub fn flash_message_minimum_level(&self) -> actix_web_flash_messages::Level {
         self.flash_message_minimum_level
+    }
+}
+
+#[derive(serde::Deserialize, Clone, Debug)]
+pub struct CookieConfiguration {
+    signing_key: Secret<String>,
+    flash_message_key: String,
+}
+
+impl CookieConfiguration {
+    pub fn signing_key(&self) -> &Secret<String> {
+        &self.signing_key
+    }
+
+    pub fn flash_message_key(&self) -> &str {
+        &self.flash_message_key
     }
 }
 

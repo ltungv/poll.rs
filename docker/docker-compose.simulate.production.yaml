@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  poll:
+    build: ..
+    restart: always
+    ports:
+      - 8000:8000/tcp
+    environment:
+      POLL__APPLICATION__DOMAIN: poll
+      POLL__COOKIE__SIGNING_KEY: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
+      POLL__DATA__HOST: postgres
+      POLL__DATA__PORT: 5432
+      POLL__DATA__USERNAME: admin
+      POLL__DATA__PASSWORD: admin
+      POLL__DATA__DATABASE: poll
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432/tcp
+    environment:
+      POSTGRES_DB: poll
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 16686:16686/tcp
+      - 14268:14268/tcp
+

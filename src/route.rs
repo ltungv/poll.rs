@@ -51,13 +51,8 @@ where
     let server = HttpServer::new(move || {
         let is_identified = |r: &ServiceRequest| r.get_identity().is_ok();
         let is_unidentified = |r: &ServiceRequest| r.get_identity().is_err();
-        let signing_key = cookie::Key::from(
-            config
-                .application()
-                .hmac_secret()
-                .expose_secret()
-                .as_bytes(),
-        );
+        let signing_key =
+            cookie::Key::from(config.cookie().signing_key().expose_secret().as_bytes());
         App::new()
             .app_data(web::Data::new(item_service.clone()))
             .app_data(web::Data::new(ballot_service.clone()))
@@ -80,8 +75,8 @@ where
             .wrap(
                 FlashMessagesFramework::builder(
                     CookieMessageStore::builder(signing_key.clone())
-                        .cookie_name(config.cookie().flash_message_key())
-                        .domain(config.application().domain())
+                        .cookie_name(config.cookie().flash_message_key().to_string())
+                        .domain(config.application().domain().to_string())
                         .build(),
                 )
                 .minimum_level(config.application().flash_message_minimum_level())
