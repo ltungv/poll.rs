@@ -4,6 +4,17 @@
 FROM rust:latest as chef
 WORKDIR /poll
 RUN cargo install cargo-chef
+# create appuser
+ENV USER=poll
+ENV UID=10001
+RUN adduser \
+--disabled-password \
+--no-create-home \
+--gecos "" \
+--shell "/sbin/nologin" \
+--home "/nonexistent" \
+--uid $UID \
+$USER
 
 # ================================================
 # cargo-chef prepare computes a lock-like file for
@@ -43,6 +54,6 @@ COPY --from=builder /etc/group /etc/group
 COPY --from=builder /poll/target/release/poll poll
 COPY --from=builder /poll/conf conf
 COPY --from=builder /poll/static static
-USER docker:docker
 ENV POLL__RUN_MODE production
+USER poll:poll
 ENTRYPOINT ["./poll"]
