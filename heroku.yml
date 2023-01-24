@@ -3,4 +3,4 @@ build:
     poll: Dockerfile
 
 run:
-  web:
+  poll: ./poll
