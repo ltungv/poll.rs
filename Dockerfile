@@ -3,22 +3,7 @@
 # ================================================
 FROM rust:latest as chef
 WORKDIR /poll
-RUN apt-get clean \
-&& apt-get update -y \
-&& apt-get install -y lld clang \
-&& cargo install cargo-chef \
-&& update-ca-certificates
-# create appuser
-ENV USER=poll
-ENV UID=10001
-RUN adduser \
---disabled-password \
---no-create-home \
---gecos "" \
---shell "/sbin/nologin" \
---home "/nonexistent" \
---uid $UID \
-$USER
+RUN cargo install cargo-chef
 
 # ================================================
 # cargo-chef prepare computes a lock-like file for
@@ -46,19 +31,18 @@ RUN cargo build --release --bin poll
 # ================================================
 FROM debian:bullseye-slim AS runtime
 WORKDIR /poll
-# get dependencies and clean up after we finish
-RUN apt-get update -y \
-&& apt-get install -y --no-install-recommends openssl ca-certificates \
-&& apt-get autoremove -y \
-&& apt-get clean -y \
-&& rm -rf /var/lib/apt/lists/*
+RUN adduser \
+--disabled-password \
+--no-create-home \
+--gecos "" \
+--shell "/sbin/nologin" \
+--home "/nonexistent" \
+--uid 10001 \
+poll
+USER poll:poll
 # import from builder.
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
 COPY --from=builder /poll/target/release/poll poll
 COPY --from=builder /poll/conf conf
 COPY --from=builder /poll/static static
 ENV POLL__RUN_MODE production
-USER poll:poll
 ENTRYPOINT ["./poll"]
-
