@@ -86,44 +86,6 @@
     },
     "query": "\n            SELECT\n                rankings.id as id,\n                rankings.ord as ord,\n                items.id as item_id,\n                items.title as item_title,\n                items.content as item_content,\n                items.done as item_done,\n                ballots.id as ballot_id,\n                ballots.uuid as ballot_uuid\n            FROM rankings\n            INNER JOIN items ON rankings.item_id = items.id\n            INNER JOIN ballots ON rankings.ballot_id = ballots.id\n            WHERE NOT items.done\n            ORDER BY rankings.ballot_id ASC, rankings.ord ASC;\n            "
   },
-  "22e1499d1b2e131fe66a983367c40f862f40a076ae23f93945be303023cbb6a5": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "title",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "content",
-          "ordinal": 2,
-          "type_info": "Text"
-        },
-        {
-          "name": "done",
-          "ordinal": 3,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items INNER JOIN rankings ON items.id = rankings.item_id\n            WHERE NOT items.done AND rankings.ballot_id = $1 \n            ORDER BY rankings.ord ASC;\n            "
-  },
   "56bb81f8df4395c28c648170e9bf5d3d260be8a4ae39d9f6cbe6c6e2ed244350": {
     "describe": {
       "columns": [
@@ -187,6 +149,44 @@
       }
     },
     "query": "\n            INSERT INTO rankings(ord, item_id, ballot_id) SELECT * FROM\n            UNNEST($1::integer[], $2::integer[], $3::integer[]) AS t(ord, item_id, ballot_id);\n            "
+  },
+  "6f56abd62910ddff16edf21c5910651455fbc5c561c31a17cec6b7f581905d47": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "content",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "done",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT items.id, items.title, items.content, items.done\n            FROM items INNER JOIN rankings ON items.id = rankings.item_id\n            WHERE NOT items.done AND rankings.ballot_id = $1\n            ORDER BY rankings.ord ASC;\n            "
   },
   "d88e1c332bc300cea5c9d2d5d60519e3ddc5822836ccaadf29cb9a1de1a4a509": {
     "describe": {

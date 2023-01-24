@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse};
 use actix_web_flash_messages::IncomingFlashMessages;
 use sailfish::TemplateOnce;
 
-use crate::{service::RankingService, view::index::IndexView};
+use crate::{service::RankingService, view::IndexView};
 
 use super::RouteError;
 

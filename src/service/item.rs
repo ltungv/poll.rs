@@ -1,4 +1,4 @@
-use crate::{model::item::Item, repository::ItemRepository};
+use crate::{model::Item, repository::ItemRepository};
 use async_trait::async_trait;
 
 use super::ServiceError;

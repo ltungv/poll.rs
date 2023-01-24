@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use crate::{
     irv::{instant_runoff_vote, InstantRunoffVotingResult},
-    model::item::Item,
+    model::Item,
     repository::TransactableRankingRepository,
 };
 
@@ -68,7 +68,7 @@ where
             .txn_create_bulk(
                 &mut txn,
                 ranked_item_ids.iter().enumerate().map(|(ord, item_id)| {
-                    crate::model::ranking::NewRanking {
+                    crate::model::NewRanking {
                         ord: ord as i32,
                         item_id: *item_id,
                         ballot_id,

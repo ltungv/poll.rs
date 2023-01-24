@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 use crate::{
-    model::{ballot::Ballot, item::Item},
+    model::{Ballot, Item},
     repository::RepositoryError,
 };
 

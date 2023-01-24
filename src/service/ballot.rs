@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::{model::ballot::Ballot, repository::BallotRepository};
+use crate::{model::Ballot, repository::BallotRepository};
 
 use super::ServiceError;
 

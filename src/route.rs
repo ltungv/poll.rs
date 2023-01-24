@@ -14,7 +14,7 @@ use actix_web_flash_messages::FlashMessagesFramework;
 use secrecy::ExposeSecret;
 use tracing_actix_web::TracingLogger;
 
-use crate::{conf::Configuration, middleware::redirect::RedirectMiddleware, service};
+use crate::{conf::Configuration, middleware::RedirectMiddleware, service};
 
 pub mod ballot;
 pub mod health;

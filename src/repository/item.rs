@@ -2,7 +2,7 @@ use sqlx::PgPool;
 
 use async_trait::async_trait;
 
-use crate::{model::item::Item, repository};
+use crate::{model::Item, repository};
 
 use super::RepositoryError;
 
@@ -26,7 +26,7 @@ impl repository::ItemRepository for ItemRepository {
             r#"
             SELECT items.id, items.title, items.content, items.done
             FROM items INNER JOIN rankings ON items.id = rankings.item_id
-            WHERE NOT items.done AND rankings.ballot_id = $1 
+            WHERE NOT items.done AND rankings.ballot_id = $1
             ORDER BY rankings.ord ASC;
             "#,
             ballot_id

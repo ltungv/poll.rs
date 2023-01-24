@@ -3,11 +3,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 use async_trait::async_trait;
 
 use crate::{
-    model::{
-        ballot::Ballot,
-        item::Item,
-        ranking::{NewRanking, Ranking},
-    },
+    model::{Ballot, Item, NewRanking, Ranking},
     repository,
 };
 

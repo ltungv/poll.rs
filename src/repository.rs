@@ -5,11 +5,7 @@ pub mod ranking;
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::model::{
-    ballot::Ballot,
-    item::Item,
-    ranking::{NewRanking, Ranking},
-};
+use crate::model::{Ballot, Item, NewRanking, Ranking};
 
 #[derive(thiserror::Error, Debug)]
 pub enum RepositoryError {

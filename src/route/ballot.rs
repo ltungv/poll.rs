@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     service::{BallotService, ItemService, RankingService},
-    view::ballot::BallotView,
+    view::BallotView,
 };
 
 use super::RouteError;
