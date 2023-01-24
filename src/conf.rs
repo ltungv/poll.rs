@@ -116,7 +116,8 @@ impl ApplicationConfiguration {
 #[derive(serde::Deserialize, Clone, Debug)]
 pub struct CookieConfiguration {
     signing_key: Secret<String>,
-    flash_message_key: String,
+    session_cookie_name: String,
+    flash_message_cookie_name: String,
 }
 
 impl CookieConfiguration {
@@ -124,8 +125,12 @@ impl CookieConfiguration {
         &self.signing_key
     }
 
-    pub fn flash_message_key(&self) -> &str {
-        &self.flash_message_key
+    pub fn session_cookie_name(&self) -> &str {
+        &self.session_cookie_name
+    }
+
+    pub fn flash_message_cookie_name(&self) -> &str {
+        &self.flash_message_cookie_name
     }
 }
 
