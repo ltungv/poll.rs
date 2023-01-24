@@ -87,7 +87,8 @@ where
                 SessionMiddleware::builder(CookieSessionStore::default(), signing_key)
                     .cookie_secure(true)
                     .cookie_http_only(true)
-                    .cookie_path("/".to_string())
+                    .cookie_domain(Some(config.application().domain().to_string()))
+                    .cookie_same_site(cookie::SameSite::Strict)
                     .build(),
             )
             .route("/", web::get().to(index::get::<RS>))
