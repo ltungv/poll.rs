@@ -1,18 +1,19 @@
 use std::net::TcpListener;
 
+use actix_cors::Cors;
 use actix_files::Files;
 use actix_identity::{IdentityExt, IdentityMiddleware};
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
     cookie,
     dev::{ResourceDef, Server, ServiceRequest},
-    ResponseError,
+    http, ResponseError,
 };
 use actix_web::{web, App, HttpServer};
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
 use secrecy::ExposeSecret;
-use tracing_actix_web::TracingLogger;
+use tracing_actix_web::{DefaultRootSpanBuilder, TracingLogger};
 
 use crate::{conf::Configuration, middleware::RedirectMiddleware, service};
 
@@ -49,18 +50,13 @@ where
     let config = config.clone();
     let listener = TcpListener::bind(config.application().address())?;
     let server = HttpServer::new(move || {
-        let is_identified = |r: &ServiceRequest| r.get_identity().is_ok();
-        let is_unidentified = |r: &ServiceRequest| r.get_identity().is_err();
-        let signing_key =
-            cookie::Key::from(config.cookie().signing_key().expose_secret().as_bytes());
         App::new()
             .app_data(web::Data::new(item_service.clone()))
             .app_data(web::Data::new(ballot_service.clone()))
             .app_data(web::Data::new(ranking_service.clone()))
-            .wrap(TracingLogger::default())
             .wrap(RedirectMiddleware::new(
                 "/ballot",
-                is_identified,
+                |r: &ServiceRequest| r.get_identity().is_ok(),
                 &[
                     ResourceDef::new("/"),
                     ResourceDef::new("/login"),
@@ -69,28 +65,22 @@ where
             ))
             .wrap(RedirectMiddleware::new(
                 "/",
-                is_unidentified,
+                |r: &ServiceRequest| r.get_identity().is_err(),
                 &[ResourceDef::new("/ballot")],
             ))
-            .wrap(
-                FlashMessagesFramework::builder(
-                    CookieMessageStore::builder(signing_key.clone())
-                        .cookie_name(config.cookie().flash_message_key().to_string())
-                        .domain(config.application().domain().to_string())
-                        .build(),
-                )
-                .minimum_level(config.application().flash_message_minimum_level())
-                .build(),
-            )
-            .wrap(IdentityMiddleware::default())
-            .wrap(
-                SessionMiddleware::builder(CookieSessionStore::default(), signing_key)
-                    .cookie_secure(true)
-                    .cookie_http_only(true)
-                    .cookie_domain(Some(config.application().domain().to_string()))
-                    .cookie_same_site(cookie::SameSite::Strict)
-                    .build(),
-            )
+            .wrap(middleware_flash_message(
+                config.application().domain(),
+                config.cookie().signing_key().expose_secret().as_bytes(),
+                config.cookie().flash_message_key(),
+                config.application().flash_message_minimum_level(),
+            ))
+            .wrap(middleware_identity())
+            .wrap(middleware_session(
+                config.application().domain(),
+                config.cookie().signing_key().expose_secret().as_bytes(),
+            ))
+            .wrap(middleware_cors(config.application().url()))
+            .wrap(middleware_tracing_logger())
             .route("/", web::get().to(index::get::<RS>))
             .route("/health", web::get().to(health::get))
             .route("/register", web::post().to(register::post::<IS, BS, RS>))
@@ -105,4 +95,46 @@ where
     .run();
 
     Ok(server)
+}
+
+fn middleware_tracing_logger() -> TracingLogger<DefaultRootSpanBuilder> {
+    TracingLogger::default()
+}
+
+fn middleware_cors(url: &str) -> Cors {
+    Cors::default()
+        .allowed_origin(url)
+        .allowed_methods([http::Method::GET, http::Method::POST])
+        .supports_credentials()
+        .max_age(3600)
+}
+
+fn middleware_identity() -> IdentityMiddleware {
+    IdentityMiddleware::default()
+}
+
+fn middleware_session(domain: &str, signing_key: &[u8]) -> SessionMiddleware<CookieSessionStore> {
+    let signing_key = cookie::Key::from(signing_key);
+    SessionMiddleware::builder(CookieSessionStore::default(), signing_key)
+        .cookie_secure(true)
+        .cookie_http_only(true)
+        .cookie_domain(Some(domain.to_string()))
+        .cookie_same_site(cookie::SameSite::Strict)
+        .build()
+}
+
+fn middleware_flash_message(
+    domain: &str,
+    signing_key: &[u8],
+    flash_message_key: &str,
+    flash_message_minimum_level: actix_web_flash_messages::Level,
+) -> FlashMessagesFramework {
+    let signing_key = cookie::Key::from(signing_key);
+    let store = CookieMessageStore::builder(signing_key)
+        .cookie_name(flash_message_key.to_string())
+        .domain(domain.to_string())
+        .build();
+    FlashMessagesFramework::builder(store)
+        .minimum_level(flash_message_minimum_level)
+        .build()
 }
