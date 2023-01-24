@@ -67,13 +67,14 @@ where
         self.ranking_repository
             .txn_create_bulk(
                 &mut txn,
-                ranked_item_ids.iter().enumerate().map(|(ord, item_id)| {
-                    crate::model::NewRanking {
+                ranked_item_ids
+                    .iter()
+                    .enumerate()
+                    .map(|(ord, item_id)| crate::model::NewRanking {
                         ord: ord as i32,
                         item_id: *item_id,
                         ballot_id,
-                    }
-                }),
+                    }),
             )
             .await?;
 
