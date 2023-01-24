@@ -8,6 +8,7 @@ services:
       - 8000:8000/tcp
     environment:
       POLL__APPLICATION__DOMAIN: poll
+      POLL__APPLICATION__URL: http://localhost:8000
       POLL__COOKIE__SIGNING_KEY: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
       POLL__DATABASE__HOST: postgres
       POLL__DATABASE__PORT: 5432
