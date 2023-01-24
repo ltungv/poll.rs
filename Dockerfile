@@ -3,7 +3,11 @@
 # ================================================
 FROM rust:latest as chef
 WORKDIR /poll
-RUN cargo install cargo-chef
+RUN apt-get clean \
+&& apt-get update -y \
+&& apt-get install -y lld clang \
+&& cargo install cargo-chef \
+&& update-ca-certificates
 # create appuser
 ENV USER=poll
 ENV UID=10001
@@ -57,3 +61,4 @@ COPY --from=builder /poll/static static
 ENV POLL__RUN_MODE production
 USER poll:poll
 ENTRYPOINT ["./poll"]
+
