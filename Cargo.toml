@@ -19,7 +19,7 @@ config = { version = "0.13", features = ["yaml"] }
 futures = "0.3"
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
 opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"] }
-sailfish = "0.5"
+sailfish = "0.6"
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"

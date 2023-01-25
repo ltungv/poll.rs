@@ -13,11 +13,11 @@
 </head>
 
 <body>
-	<%- flash_messages_view.render_once()? %>
+	<%+ flash_messages_view %>
 
 	<section class="section">
 		<p class="title">This is our current best option</p>
-		<%- best_item_view.render_once()? %>
+		<%+ best_item_view %>
 
 		<form method="POST" action="/register">
 			<div class="field has-addons">
