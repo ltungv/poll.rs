@@ -18,7 +18,7 @@ jobs:
     name: Run test
     steps:
       - name: Setup toolchain
-        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+        uses: ./.github/actions/platform
 
       - name: Run test suite
-        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+        uses: ./.github/actions/test

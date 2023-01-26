@@ -14,10 +14,10 @@ jobs:
     name: Run test
     steps:
       - name: Setup toolchain
-        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+        uses: ./.github/actions/platform
 
       - name: Run test suite
-        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+        uses: ./.github/actions/test
 
       - name: Build binary
         run: cargo build --release --target x86_64-unknown-linux-gnu
