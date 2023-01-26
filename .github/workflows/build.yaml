@@ -14,7 +14,7 @@ jobs:
     name: Run test
     steps:
       - name: Setup toolchain
-        uses: ./.github/actions/platform
+        uses: ./.github/actions/toolchain
 
       - name: Run test suite
         uses: ./.github/actions/test
