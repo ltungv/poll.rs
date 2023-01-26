@@ -10,4 +10,4 @@ on:
 
 jobs:
   test:
-    uses: letung3105/poll.rs/.github/workflows/test.yaml@main
+    uses: letung3105/poll.rs/.github/workflows/test.yaml@master
