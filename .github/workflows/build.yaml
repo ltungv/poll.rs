@@ -2,7 +2,11 @@ name: Build
 
 on:
   push:
-    tags: '*'
+    tags: 'dev-*'
+    paths-ignore:
+      - .github/
+      - docs/
+      - scripts/
 
 jobs:
   test:
