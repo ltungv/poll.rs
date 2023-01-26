@@ -4,9 +4,9 @@ on:
   push:
     tags: 'dev-*'
     paths-ignore:
-      - .github/
-      - docs/
-      - scripts/
+      - .github/**
+      - docs/**
+      - scripts/**
 
 jobs:
   test:
