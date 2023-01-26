@@ -14,4 +14,11 @@ on:
 
 jobs:
   test:
-    uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+    runs-on: ubuntu-latest
+    name: Run test
+    steps:
+      - name: Setup toolchain
+        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
+
+      - name: Run test suite
+        uses: letung3105/poll.rs/.github/workflows/test.yaml@master
