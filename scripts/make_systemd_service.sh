@@ -2,7 +2,6 @@
 
 set -euxo pipefail
 
-SERVICE_WORKING_DIR=$1
 CURRENT_DIR=$(pwd)
 
 cat > ${CURRENT_DIR}/poll.service << EOF
@@ -13,8 +12,8 @@ After=mysql.service
 [Service]
 Type=simple
 Restart=always
-ExecStart=${SERVICE_WORKING_DIR}/poll
-WorkingDirectory=${SERVICE_WORKING_DIR}
+ExecStart=${CURRENT_DIR}/poll
+WorkingDirectory=${CURRENT_DIR}
 Environment=POLL__RUN_MODE=production
 
 [Install]
