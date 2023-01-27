@@ -96,7 +96,6 @@ pub struct ApplicationConfiguration {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     port: u16,
     url: String,
-    domain: String,
     flash_message_minimum_level: actix_web_flash_messages::Level,
 }
 
@@ -107,10 +106,6 @@ impl ApplicationConfiguration {
 
     pub fn url(&self) -> &str {
         &self.url
-    }
-
-    pub fn domain(&self) -> &str {
-        &self.domain
     }
 
     pub fn flash_message_minimum_level(&self) -> actix_web_flash_messages::Level {

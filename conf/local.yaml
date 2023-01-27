@@ -1,6 +1,5 @@
 application:
   url: http://localhost:8000
-  domain: localhost
   flash_message_minimum_level: Debug
 cookie:
   signing_key: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz

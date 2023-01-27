@@ -69,14 +69,12 @@ where
                 &[ResourceDef::new("/ballot")],
             ))
             .wrap(middleware_flash_message(
-                config.application().domain(),
                 config.application().flash_message_minimum_level(),
                 config.cookie().signing_key().expose_secret().as_bytes(),
                 config.cookie().flash_message_cookie_name(),
             ))
             .wrap(middleware_identity())
             .wrap(middleware_session(
-                config.application().domain(),
                 config.cookie().signing_key().expose_secret().as_bytes(),
                 config.cookie().session_cookie_name(),
             ))
@@ -115,7 +113,6 @@ fn middleware_identity() -> IdentityMiddleware {
 }
 
 fn middleware_session(
-    domain: &str,
     signing_key: &[u8],
     cookie_name: &str,
 ) -> SessionMiddleware<CookieSessionStore> {
@@ -124,13 +121,11 @@ fn middleware_session(
         .cookie_name(cookie_name.to_string())
         .cookie_secure(true)
         .cookie_http_only(true)
-        .cookie_domain(Some(domain.to_string()))
         .cookie_same_site(cookie::SameSite::Strict)
         .build()
 }
 
 fn middleware_flash_message(
-    domain: &str,
     minimum_level: actix_web_flash_messages::Level,
     signing_key: &[u8],
     cookie_name: &str,
@@ -138,7 +133,6 @@ fn middleware_flash_message(
     let signing_key = cookie::Key::from(signing_key);
     let store = CookieMessageStore::builder(signing_key)
         .cookie_name(cookie_name.to_string())
-        .domain(domain.to_string())
         .build();
     FlashMessagesFramework::builder(store)
         .minimum_level(minimum_level)
