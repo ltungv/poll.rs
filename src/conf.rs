@@ -223,7 +223,7 @@ impl TryFrom<String> for RunMode {
             "production" => Ok(Self::Production),
             other => Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                format!("{} is not a supported environment", other),
+                format!("{other} is not a supported environment"),
             )),
         }
     }
