@@ -18,11 +18,12 @@ No need for serious security and users are allowed to change their rankings.
 # Tech stack
 
 + Server: [actix-web]
-+ Database: [sqlx]
++ Database: [sqlx], [mysql]
 + Template: [sailfish]
 + Observability: [tracing], [opentelemetry]
 
 [actix-web]: https://github.com/actix/actix-web
+[mysql]: https://www.mysql.com
 [sqlx]: https://github.com/launchbadge/sqlx
 [sailfish]: https://github.com/launchbadge/sqlx
 [tracing]: https://github.com/tokio-rs/tracing
