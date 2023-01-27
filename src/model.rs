@@ -36,6 +36,25 @@ pub struct Ranking {
     pub ballot: Ballot,
 }
 
+impl From<JoinedRanking> for Ranking {
+    fn from(r: JoinedRanking) -> Self {
+        Ranking {
+            id: r.id,
+            ord: r.ord,
+            item: Item {
+                id: r.item_id,
+                title: r.item_title,
+                content: r.item_content,
+                done: r.item_done,
+            },
+            ballot: Ballot {
+                id: r.ballot_id,
+                uuid: r.ballot_uuid,
+            },
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct NewRanking {
     pub ord: i32,

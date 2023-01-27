@@ -7,6 +7,8 @@ use uuid::Uuid;
 
 use crate::model::{Ballot, Item, NewRanking, Ranking};
 
+const BIND_LIMIT: usize = 1 << 16;
+
 #[derive(thiserror::Error, Debug)]
 pub enum RepositoryError {
     #[error(transparent)]
@@ -39,10 +41,13 @@ pub trait BallotRepository: Clone + Send + Sync {
 
 #[async_trait]
 pub trait TransactableRankingRepository: Transact + RankingRepository {
+    /// Takes new rankings from the iterator and insert them into the repository.
+    ///
+    /// Callers must make sure that the iterator is not empty.
     async fn txn_create_bulk<I>(
         &self,
         txn: &mut Self::Txn,
-        rankings: I,
+        rankings: &mut I,
     ) -> Result<(), RepositoryError>
     where
         I: Iterator<Item = NewRanking> + Send;

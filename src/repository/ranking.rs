@@ -1,13 +1,13 @@
-use sqlx::{MySql, MySqlPool, Transaction};
+use sqlx::{Execute, MySql, MySqlPool, QueryBuilder, Transaction};
 
 use async_trait::async_trait;
 
 use crate::{
-    model::{Ballot, Item, JoinedRanking, NewRanking, Ranking},
+    model::{JoinedRanking, NewRanking, Ranking},
     repository,
 };
 
-use super::{RepositoryError, Transact};
+use super::{RepositoryError, Transact, BIND_LIMIT};
 
 #[derive(Clone)]
 pub struct RankingRepository {
@@ -61,23 +61,7 @@ impl repository::RankingRepository for RankingRepository {
         .await?;
 
         // Map from the temporary struct to our data model
-        Ok(rows
-            .iter()
-            .map(|r| Ranking {
-                id: r.id,
-                ord: r.ord,
-                item: Item {
-                    id: r.item_id,
-                    title: r.item_title.clone(),
-                    content: r.item_content.clone(),
-                    done: r.item_done,
-                },
-                ballot: Ballot {
-                    id: r.ballot_id,
-                    uuid: r.ballot_uuid,
-                },
-            })
-            .collect())
+        Ok(rows.into_iter().map(Ranking::from).collect())
     }
 }
 
@@ -90,24 +74,24 @@ impl repository::TransactableRankingRepository for RankingRepository {
     async fn txn_create_bulk<I>(
         &self,
         txn: &mut Self::Txn,
-        rankings: I,
+        rankings: &mut I,
     ) -> Result<(), RepositoryError>
     where
         I: Iterator<Item = NewRanking> + Send,
     {
-        let values: Vec<_> = rankings
-            .into_iter()
-            .map(|r| format!("({}, {}, {})", r.ord, r.item_id, r.ballot_id))
-            .collect();
-        if values.is_empty() {
-            return Ok(());
-        }
-        let query = format!(
-            "INSERT INTO rankings(ord, item_id, ballot_id) VALUES {}",
-            values.join(","),
-        );
-        tracing::Span::current().record("query", tracing::field::display(&query));
-        sqlx::query(query.as_str()).execute(txn).await?;
+        let mut query_builder =
+            QueryBuilder::<MySql>::new("INSERT INTO rankings(ord, item_id, ballot_id)\n");
+
+        // 3 is the number of arguments the we bind for each ranking
+        query_builder.push_values(rankings.take(BIND_LIMIT / 3), |mut b, r| {
+            b.push_bind(r.ord)
+                .push_bind(r.item_id)
+                .push_bind(r.ballot_id);
+        });
+
+        let query = query_builder.build();
+        tracing::Span::current().record("query", tracing::field::display(query.sql()));
+        query.execute(txn).await?;
         Ok(())
     }
 

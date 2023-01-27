@@ -64,19 +64,21 @@ where
         self.ranking_repository
             .txn_remove_ballot_rankings(&mut txn, ballot_id)
             .await?;
-        self.ranking_repository
-            .txn_create_bulk(
-                &mut txn,
-                ranked_item_ids
-                    .iter()
-                    .enumerate()
-                    .map(|(ord, item_id)| crate::model::NewRanking {
-                        ord: ord as i32,
-                        item_id: *item_id,
-                        ballot_id,
-                    }),
-            )
-            .await?;
+
+        let mut rankings_iter =
+            ranked_item_ids
+                .iter()
+                .enumerate()
+                .map(|(ord, item_id)| crate::model::NewRanking {
+                    ord: ord as i32,
+                    item_id: *item_id,
+                    ballot_id,
+                });
+        while rankings_iter.len() != 0 {
+            self.ranking_repository
+                .txn_create_bulk(&mut txn, &mut rankings_iter)
+                .await?;
+        }
 
         // END TRANSACTION
         self.ranking_repository.end(txn).await?;
