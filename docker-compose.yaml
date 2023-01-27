@@ -10,7 +10,7 @@ services:
       POLL__APPLICATION__DOMAIN: localhost
       POLL__APPLICATION__URL: http://localhost:8000
       POLL__COOKIE__SIGNING_KEY: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
-      POLL__DATABASE__HOST: postgres
+      POLL__DATABASE__HOST: mysql
       POLL__DATABASE__PORT: 3306
       POLL__DATABASE__USERNAME: admin
       POLL__DATABASE__PASSWORD: admin
@@ -24,9 +24,10 @@ services:
     ports:
       - 3306:3306/tcp
     environment:
-      MYSQL_DB: poll
       MYSQL_USER: admin
       MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: poll
+      MYSQL_ROOT_PASSWORD: root
 
   jaeger:
     image: jaegertracing/all-in-one:latest
