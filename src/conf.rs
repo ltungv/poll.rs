@@ -18,7 +18,7 @@ pub enum ConfigurationError {
 pub struct ConfigurationBuilder<'a> {
     env_prefix: &'a str,
     env_run_mode: &'a str,
-    config_directory: &'a str,
+    config_directory: &'a Path,
     config_base_name: &'a str,
 }
 
@@ -27,7 +27,7 @@ impl<'a> Default for ConfigurationBuilder<'a> {
         Self {
             env_prefix: ENV_PREFIX,
             env_run_mode: ENV_RUN_MODE,
-            config_directory: CONFIG_DIRECTORY,
+            config_directory: Path::new(CONFIG_DIRECTORY),
             config_base_name: CONFIG_BASE_NAME,
         }
     }
@@ -56,6 +56,11 @@ impl<'a> ConfigurationBuilder<'a> {
             )
             .build()?;
         Ok(configuration.try_deserialize::<Configuration>()?)
+    }
+
+    pub fn config_directory(&mut self, config_directory: &'a Path) -> &mut Self {
+        self.config_directory = config_directory;
+        self
     }
 }
 

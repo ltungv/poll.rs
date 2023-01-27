@@ -15,6 +15,7 @@ actix-web = "4"
 actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
 anyhow = "1"
 async-trait = "0.1"
+clap = { version = "4", features = ["derive"] }
 config = { version = "0.13", features = ["yaml"] }
 futures = "0.3"
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
