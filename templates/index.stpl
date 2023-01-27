@@ -34,7 +34,7 @@
 						class="input"
 						name="uuid"
 						type="text"
-						placeholder="A unique id"
+						placeholder="Unique ID"
 					/>
 				</div>
 				<div class="control">

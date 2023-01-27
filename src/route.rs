@@ -121,7 +121,7 @@ fn middleware_session(
         .cookie_name(cookie_name.to_string())
         .cookie_secure(true)
         .cookie_http_only(true)
-        .cookie_same_site(cookie::SameSite::Strict)
+        .cookie_same_site(cookie::SameSite::Lax)
         .build()
 }
 
