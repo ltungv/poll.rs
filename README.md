@@ -35,14 +35,4 @@ No need for serious security and users are allowed to change their rankings.
 insert into items(title, content) values
 	('Ada Lovelace', 'Augusta Ada King, Countess of Lovelace was an English mathematician and writer.'),
 	('Alan Turing', 'Alan Mathison Turing OBE FRS was an English mathematician, computer scientist, logician, cryptanalyst, philosopher, and theoretical biologist.');
-
-insert into ballots(uuid) values
-	('ece43bf2-51b4-4243-aae5-67e661f20f59'),
-	('fc427f2b-0528-47fc-8503-11162aa483f0');
-
-insert into rankings(ballot_id,item_id,ord) values
-	(1,1,0),
-	(1,2,1),
-	(2,1,1),
-	(2,2,0);
 ```
