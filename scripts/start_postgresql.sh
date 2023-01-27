@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -exo pipefail
 
 if ! [ -x "$(command -v docker)" ]; then
   >&2 echo "Error: docker is not installed."
@@ -29,23 +29,18 @@ if [[ -z "${SKIP_DOCKER}" ]]; then
     --format '{{.ID}}')
   if [[ -n $CONTAINER_POSTGRESQL ]]; then
     echo >&2 "there is a postgresql container already running"
-
-    echo >&2 "killing container..."
-    docker kill $CONTAINER_POSTGRESQL
-
-    echo >&2 "removing container..."
-    docker rm $CONTAINER_POSTGRESQL
+    exit 1
   fi
-
-  docker run \
-  -e POSTGRES_USER=${DB_USER} \
-  -e POSTGRES_PASSWORD=${DB_PASS} \
-  -e POSTGRES_DB=${DB_NAME} \
-  -p "${DB_PORT}":5432 \
-  -d \
-  --name "poll-database-postgresql-$(date '+%s')" \
-  postgres -N 1000
 fi
+
+docker run \
+-e POSTGRES_USER=${DB_USER} \
+-e POSTGRES_PASSWORD=${DB_PASS} \
+-e POSTGRES_DB=${DB_NAME} \
+-p "${DB_PORT}":5432 \
+-d \
+--name "poll-database-postgresql-$(date '+%s')" \
+postgres -N 1000
 
 # Keep pinging postgres until it's ready to accept commands
 until PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -p $DB_PORT -d $DB_NAME -c '\q'; do

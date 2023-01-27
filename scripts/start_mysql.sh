@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -exo pipefail
 
 if ! [ -x "$(command -v docker)" ]; then
   >&2 echo "Error: docker is not installed."
@@ -30,20 +30,19 @@ if [[ -z "${SKIP_DOCKER}" ]]; then
     --format '{{.ID}}')
   if [[ -n $CONTAINER_MYSQL ]]; then
     echo >&2 "there is a mysql container already running"
-    echo >&2 "removing container..."
-    docker kill $CONTAINER_MYSQL || docker rm $CONTAINER_MYSQL
+    exit 1
   fi
-
-  docker run \
-  -e MYSQL_USER=${DB_USER} \
-  -e MYSQL_PASSWORD=${DB_PASS} \
-  -e MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS} \
-  -e MYSQL_DATABASE=${DB_NAME} \
-  -p "${DB_PORT}":3306 \
-  -d \
-  --name "poll-database-mysql-$(date '+%s')" \
-  mysql
 fi
+
+docker run \
+-e MYSQL_USER=${DB_USER} \
+-e MYSQL_PASSWORD=${DB_PASS} \
+-e MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS} \
+-e MYSQL_DATABASE=${DB_NAME} \
+-p "${DB_PORT}":3306 \
+-d \
+--name "poll-database-mysql-$(date '+%s')" \
+mysql
 
 # Keep pinging mysql until it's ready to accept commands
 until mysql -h $DB_HOST -P $DB_PORT -D $DB_NAME -u $DB_USER -p$DB_PASS -e 'quit'; do
