@@ -8,6 +8,8 @@ on:
       - .github/**
       - docs/**
       - scripts/**
+      - README.md
+      - LICENSE
   pull_request:
     branches:
       - 'master'
