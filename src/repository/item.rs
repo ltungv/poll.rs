@@ -30,12 +30,10 @@ impl repository::ItemRepository for ItemRepository {
             WHERE NOT items.done AND rankings.ballot_id = ?
             ORDER BY rankings.ord ASC"#;
         tracing::Span::current().record("query", tracing::field::display(query));
-        let items = sqlx::query_as(
-            query
-        )
-        .bind(ballot_id)
-        .fetch_all(&self.pool)
-        .await?;
+        let items = sqlx::query_as(query)
+            .bind(ballot_id)
+            .fetch_all(&self.pool)
+            .await?;
         Ok(items)
     }
 
