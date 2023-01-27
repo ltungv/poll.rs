@@ -1,6 +1,0 @@
-build:
-  docker:
-    poll: Dockerfile
-
-run:
-  poll: ./poll
