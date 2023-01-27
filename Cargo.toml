@@ -24,7 +24,7 @@ secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
 serde_json = "1"
-sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "postgres", "macros", "migrate", "offline", "uuid"] }
+sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "mysql", "macros", "migrate", "offline", "uuid"] }
 thiserror = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"

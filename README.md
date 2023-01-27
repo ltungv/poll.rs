@@ -36,8 +36,8 @@ insert into items(title, content) values
 	('Alan Turing', 'Alan Mathison Turing OBE FRS was an English mathematician, computer scientist, logician, cryptanalyst, philosopher, and theoretical biologist.');
 
 insert into ballots(uuid) values
-	(gen_random_uuid()),
-	(gen_random_uuid());
+	('ece43bf2-51b4-4243-aae5-67e661f20f59'),
+	('fc427f2b-0528-47fc-8503-11162aa483f0');
 
 insert into rankings(ballot_id,item_id,ord) values
 	(1,1,0),

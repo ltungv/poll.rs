@@ -6,7 +6,7 @@ use crate::{
 };
 
 use actix_web::dev::Server;
-use sqlx::postgres::{PgConnectOptions, PgPoolOptions, PgSslMode};
+use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlSslMode};
 
 pub struct Application {
     server: Server,
@@ -14,14 +14,14 @@ pub struct Application {
 
 impl Application {
     pub fn new(configuration: &Configuration) -> Result<Self, anyhow::Error> {
-        let db_pool = PgPoolOptions::new()
+        let db_pool = MySqlPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_secs(2))
             .connect_lazy_with(
-                PgConnectOptions::new()
+                MySqlConnectOptions::new()
                     .ssl_mode(if configuration.database().require_ssl() {
-                        PgSslMode::Require
+                        MySqlSslMode::Required
                     } else {
-                        PgSslMode::Prefer
+                        MySqlSslMode::Preferred
                     })
                     .host(configuration.database().host())
                     .port(configuration.database().port())

@@ -6,7 +6,7 @@ cookie:
   signing_key: zL8G258m3nUzqNmwEWThh6YEv7zgC6srqVdhm4c7EN8Sm5dGyr6S5963JfifDnvz
 database:
   host: 127.0.0.1
-  port: 5432
+  port: 3306
   username: admin
   password: admin
   database: poll

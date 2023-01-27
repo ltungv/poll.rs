@@ -1,9 +1,9 @@
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{MySql, MySqlPool, Transaction};
 
 use async_trait::async_trait;
 
 use crate::{
-    model::{Ballot, Item, NewRanking, Ranking},
+    model::{Ballot, Item, JoinedRanking, NewRanking, Ranking},
     repository,
 };
 
@@ -11,18 +11,18 @@ use super::{RepositoryError, Transact};
 
 #[derive(Clone)]
 pub struct RankingRepository {
-    pool: PgPool,
+    pool: MySqlPool,
 }
 
 impl RankingRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub fn new(pool: MySqlPool) -> Self {
         Self { pool }
     }
 }
 
 #[async_trait]
 impl Transact for RankingRepository {
-    type Txn = Transaction<'static, Postgres>;
+    type Txn = Transaction<'static, MySql>;
 
     #[tracing::instrument(skip(self))]
     async fn begin(&self) -> Result<Self::Txn, RepositoryError> {
@@ -39,7 +39,7 @@ impl repository::RankingRepository for RankingRepository {
     #[tracing::instrument(skip(self))]
     async fn get_all(&self) -> Result<Vec<Ranking>, RepositoryError> {
         // Query for items sorted by ballot id and ranking order
-        let rows = sqlx::query!(
+        let rows: Vec<JoinedRanking> = sqlx::query_as(
             r#"
             SELECT
                 rankings.id as id,
@@ -55,7 +55,7 @@ impl repository::RankingRepository for RankingRepository {
             INNER JOIN ballots ON rankings.ballot_id = ballots.id
             WHERE NOT items.done
             ORDER BY rankings.ballot_id ASC, rankings.ord ASC;
-            "#
+            "#,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -85,11 +85,7 @@ impl repository::RankingRepository for RankingRepository {
 impl repository::TransactableRankingRepository for RankingRepository {
     #[tracing::instrument(
         skip(self, rankings, txn),
-        fields(
-            orderings=tracing::field::Empty,
-            item_ids=tracing::field::Empty,
-            ballot_ids=tracing::field::Empty,
-        )
+        fields(query=tracing::field::Empty)
     )]
     async fn txn_create_bulk<I>(
         &self,
@@ -99,47 +95,34 @@ impl repository::TransactableRankingRepository for RankingRepository {
     where
         I: Iterator<Item = NewRanking> + Send,
     {
-        let mut orderings = Vec::new();
-        let mut item_ids = Vec::new();
-        let mut ballot_ids = Vec::new();
-        for r in rankings {
-            orderings.push(r.ord);
-            item_ids.push(r.item_id);
-            ballot_ids.push(r.ballot_id);
+        let values: Vec<_> = rankings
+            .into_iter()
+            .map(|r| format!("({}, {}, {})", r.ord, r.item_id, r.ballot_id))
+            .collect();
+        if values.is_empty() {
+            return Ok(());
         }
-
-        tracing::Span::current()
-            .record("orderings", &tracing::field::display(orderings.len()))
-            .record("item_ids", &tracing::field::display(item_ids.len()))
-            .record("ballot_ids", &tracing::field::display(ballot_ids.len()));
-
-        sqlx::query!(
-            r#"
-            INSERT INTO rankings(ord, item_id, ballot_id) SELECT * FROM
-            UNNEST($1::integer[], $2::integer[], $3::integer[]) AS t(ord, item_id, ballot_id);
-            "#,
-            &orderings,
-            &item_ids,
-            &ballot_ids
-        )
-        .execute(txn)
-        .await?;
-
+        let query = format!(
+            "INSERT INTO rankings(ord, item_id, ballot_id) VALUES {}",
+            values.join(","),
+        );
+        tracing::Span::current().record("query", tracing::field::display(&query));
+        sqlx::query(query.as_str()).execute(txn).await?;
         Ok(())
     }
 
-    #[tracing::instrument(skip(self, txn))]
+    #[tracing::instrument(
+        skip(self, txn),
+        fields(query=tracing::field::Empty)
+    )]
     async fn txn_remove_ballot_rankings(
         &self,
         txn: &mut Self::Txn,
         ballot_id: i32,
     ) -> Result<(), RepositoryError> {
-        sqlx::query!(
-            "DELETE FROM rankings WHERE rankings.ballot_id = $1;",
-            ballot_id,
-        )
-        .execute(txn)
-        .await?;
+        let query = "DELETE FROM rankings WHERE rankings.ballot_id = ?";
+        tracing::Span::current().record("query", tracing::field::display(query));
+        sqlx::query(query).bind(ballot_id).execute(txn).await?;
         Ok(())
     }
 }
