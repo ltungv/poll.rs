@@ -13,7 +13,7 @@ No need for serious security and users are allowed to change their rankings.
 + Each user is assigned an UUID after they register.
 + The UUID can later be used to access existing rankings.
 + Users' account has no password.
-+ Users' session is kept in using cookie.
++ Users' session is kept in cookie.
 
 # Tech stack
 
