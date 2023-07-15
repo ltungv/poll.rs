@@ -17,10 +17,10 @@ pub enum RepositoryError {
 
 #[async_trait]
 pub trait Transact {
-    type Txn: Send + Sync;
+    type Txn<'a>: Send + Sync;
 
-    async fn begin(&self) -> Result<Self::Txn, RepositoryError>;
-    async fn end(&self, txn: Self::Txn) -> Result<(), RepositoryError>;
+    async fn begin(&self) -> Result<Self::Txn<'_>, RepositoryError>;
+    async fn end(&self, txn: Self::Txn<'_>) -> Result<(), RepositoryError>;
 }
 
 #[async_trait]
@@ -46,7 +46,7 @@ pub trait TransactableRankingRepository: Transact + RankingRepository {
     /// Callers must make sure that the iterator is not empty.
     async fn txn_create_bulk<I>(
         &self,
-        txn: &mut Self::Txn,
+        txn: &mut Self::Txn<'_>,
         rankings: &mut I,
     ) -> Result<(), RepositoryError>
     where
@@ -54,7 +54,7 @@ pub trait TransactableRankingRepository: Transact + RankingRepository {
 
     async fn txn_remove_ballot_rankings(
         &self,
-        txn: &mut Self::Txn,
+        txn: &mut Self::Txn<'_>,
         ballot_id: i32,
     ) -> Result<(), RepositoryError>;
 }

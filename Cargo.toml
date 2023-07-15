@@ -18,20 +18,20 @@ async-trait = "0.1"
 clap = { version = "4", features = ["derive"] }
 config = { version = "0.13", features = ["yaml"] }
 futures = "0.3"
-opentelemetry = { version = "0.18", features = ["rt-tokio"] }
-opentelemetry-jaeger = { version = "0.17", features = ["rt-tokio"] }
-sailfish = "0.6"
+opentelemetry = { version = "0.19", features = ["rt-tokio"] }
+opentelemetry-jaeger = { version = "0.18", features = ["rt-tokio"] }
+sailfish = "0.7"
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
 serde_json = "1"
-sqlx = { version = "0.6", features = ["runtime-actix-native-tls", "mysql", "macros", "migrate", "offline", "uuid"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "mysql", "macros", "migrate", "uuid"] }
 thiserror = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
-tracing-actix-web = { version = "0.7", features = ["opentelemetry_0_18"] }
+tracing-actix-web = { version = "0.7", features = ["opentelemetry_0_19"] }
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
-tracing-opentelemetry = "0.18"
+tracing-opentelemetry = "0.19"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
 uuid = { version = "1", features = ["v4", "serde"] }
