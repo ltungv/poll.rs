@@ -82,7 +82,7 @@ where
             .wrap(middleware_tracing_logger())
             .route("/", web::get().to(index::get::<RS>))
             .route("/health", web::get().to(health::get))
-            .route("/register", web::post().to(register::post::<IS, BS, RS>))
+            .route("/register", web::post().to(register::post::<BS>))
             .service(
                 web::resource("/ballot")
                     .route(web::get().to(ballot::get::<IS, BS, RS>))

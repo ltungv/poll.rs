@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use sqlx::{Execute, MySql, MySqlPool, QueryBuilder, Transaction};
 
 use async_trait::async_trait;
@@ -22,15 +24,15 @@ impl RankingRepository {
 
 #[async_trait]
 impl Transact for RankingRepository {
-    type Txn = Transaction<'static, MySql>;
+    type Txn<'a> = Transaction<'a, MySql>;
 
     #[tracing::instrument(skip(self))]
-    async fn begin(&self) -> Result<Self::Txn, RepositoryError> {
+    async fn begin(&self) -> Result<Self::Txn<'_>, RepositoryError> {
         Ok(self.pool.begin().await?)
     }
 
     #[tracing::instrument(skip(self, txn))]
-    async fn end(&self, txn: Self::Txn) -> Result<(), RepositoryError> {
+    async fn end(&self, txn: Self::Txn<'_>) -> Result<(), RepositoryError> {
         Ok(txn.commit().await?)
     }
 }
@@ -73,7 +75,7 @@ impl repository::TransactableRankingRepository for RankingRepository {
     )]
     async fn txn_create_bulk<I>(
         &self,
-        txn: &mut Self::Txn,
+        txn: &mut Self::Txn<'_>,
         rankings: &mut I,
     ) -> Result<(), RepositoryError>
     where
@@ -91,7 +93,7 @@ impl repository::TransactableRankingRepository for RankingRepository {
 
         let query = query_builder.build();
         tracing::Span::current().record("query", tracing::field::display(query.sql()));
-        query.execute(txn).await?;
+        query.execute(txn.deref_mut()).await?;
         Ok(())
     }
 
@@ -101,12 +103,15 @@ impl repository::TransactableRankingRepository for RankingRepository {
     )]
     async fn txn_remove_ballot_rankings(
         &self,
-        txn: &mut Self::Txn,
+        txn: &mut Self::Txn<'_>,
         ballot_id: i32,
     ) -> Result<(), RepositoryError> {
         let query = "DELETE FROM rankings WHERE rankings.ballot_id = ?";
         tracing::Span::current().record("query", tracing::field::display(query));
-        sqlx::query(query).bind(ballot_id).execute(txn).await?;
+        sqlx::query(query)
+            .bind(ballot_id)
+            .execute(txn.deref_mut())
+            .await?;
         Ok(())
     }
 }

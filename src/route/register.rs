@@ -13,7 +13,7 @@ pub struct RegisterFormData {
 }
 
 #[tracing::instrument(skip(request, ballot_service))]
-pub async fn post<IS, BS, RS>(
+pub async fn post<BS>(
     request: HttpRequest,
     form: web::Form<RegisterFormData>,
     ballot_service: web::Data<BS>,
