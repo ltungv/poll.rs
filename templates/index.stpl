@@ -3,13 +3,20 @@
 
 <head>
 	<% include!("header.stpl"); %>
-	<link 
+	<link
 		rel="stylesheet"
 		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
 		integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
 		crossorigin="anonymous"
 		referrerpolicy="no-referrer"
 	/>
+	<script
+		defer
+		src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.3/cdn.min.js"
+		integrity="sha512-XpPnaYn/Y/hcDzJa//4tOusxoA8/blkeeehF/qLAQPm3rej3Ds3msq1lLZCsFtnvnTtpIDQcyua4ZnELbwyy1Q=="
+		crossorigin="anonymous"
+		referrerpolicy="no-referrer">
+	</script>
 </head>
 
 <body>
@@ -19,10 +26,10 @@
 		<p class="title">This is our current best option</p>
 		<%+ best_item_view %>
 
-		<form method="POST" action="/register">
+		<form method="POST" action="/register" x-data="{ uuid: '' }">
 			<div class="field has-addons">
 				<div class="control">
-					<button type="button" class="button" onclick="handleClickBallotRegisterButton()">
+					<button type="button" class="button" @click="uuid = crypto.randomUUID()">
 						<span class="icon">
 							<i class="fas fa-arrows-rotate"></i>
 						</span>
@@ -35,6 +42,7 @@
 						name="uuid"
 						type="text"
 						placeholder="Unique ID"
+						x-model="uuid"
 					/>
 				</div>
 				<div class="control">
@@ -44,7 +52,5 @@
 		</form>
 	</section>
 </body>
-
-<script src="/static/home.js"></script>
 
 </html>

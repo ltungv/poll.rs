@@ -3,6 +3,23 @@
 
 <head>
 	<% include!("header.stpl"); %>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.3/htmx.min.js"
+		integrity="sha512-+tp2z7fiP5/7Q3DZZkHXaV1BjgtkLuV4vX7khfzKqVJ+/55LWr7Ulz0cqIS1AlB+wmZW6oAkE64VN2sjFXs6dA=="
+		crossorigin="anonymous"
+		referrerpolicy="no-referrer">
+	</script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.3/ext/json-enc.min.js"
+		integrity="sha512-jcH0sr76CPbMe+4E23BWif6BgftQK43X6TwEWE8X7Sz7wB4mT8Nx6PO0DE7C7810tIV7OeCZ0MQ3oKL/61W+Hg=="
+		crossorigin="anonymous"
+		referrerpolicy="no-referrer"></script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"
+		integrity="sha512-Eezs+g9Lq4TCCq0wae01s9PuNWzHYoCMkE97e2qdkYthpI0pzC3UGB03lgEHn2XM85hDOUF6qgqqszs+iXU4UA=="
+		crossorigin="anonymous"
+		referrerpolicy="no-referrer">
+	</script>
 </head>
 
 <body>
@@ -10,23 +27,35 @@
 
 	<section class="section">
 		<p class="title">This is our current best option</p>
-		<%+ best_item_view %>
+		<div id="best-item-container">
+			<%+ best_item_view %>
+		</div>
 
 		<p class="title mt-6">Your rankings (<%= uuid.to_string() %>)</p>
-		<div id="ballot-rankings-container" class="list-group">
+		<form
+			id="ballot-rankings-container"
+			class="list-group"
+			hx-ext='json-enc'
+			hx-post="/ballot"
+			hx-swap="innerHTML"
+			hx-target="#best-item-container"
+			hx-trigger="sort">
 			<% for it in ranked_items.iter() { %>
 				<div data-id="<%= it.id %>" class="ballot-rankings-item list-group-item box mt-1 mb-1">
+					<input type="hidden" name="items" value="<%= it.id %>">
 					<p class="title"><%= it.title %></p>
 					<p class="subtitle"><%= it.content %></p>
 				</div>
 			<% } %>
 
 			<div data-id="delimiter" id="ballot-rankings-delimiter" class="box mt-1 mb-1">
+				<input type="hidden" name="items" value="<DELIMITER>">
 				<p class="subtitle">ITEMS BELOW THIS IS NOT RANKED</p>
 			</div>
 
 			<% for it in unranked_items.iter() { %>
 				<div data-id="<%= it.id %>" class="ballot-rankings-item list-group-item box mt-1 mb-1">
+					<input type="hidden" name="items" value="<%= it.id %>">
 					<p class="title"><%= it.title %></p>
 					<p class="subtitle"><%= it.content %></p>
 				</div>
@@ -35,7 +64,10 @@
 	</section>
 </body>
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-<script src="/static/ballot.js"></script>
+<script>
+htmx.onLoad(function() {
+	Sortable.create(document.getElementById('ballot-rankings-container'))
+})
+</script>
 
 </html>

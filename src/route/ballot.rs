@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     service::{BallotService, ItemService, RankingService},
-    view::BallotView,
+    view::{BallotView, BestItemView},
 };
 
 use super::RouteError;
@@ -55,7 +55,7 @@ where
 
 #[derive(Debug, Deserialize)]
 pub struct BallotUpdateData {
-    ranked_item_ids: Vec<i32>,
+    items: Vec<String>,
 }
 
 #[tracing::instrument(skip(identity, ballot_service, ranking_service))]
@@ -83,8 +83,18 @@ where
                 .finish());
         }
     };
+
+    let ranked_item_ids: Vec<i32> = ballot_update_data
+        .items
+        .iter()
+        .take_while(|id| id.as_str() != "<DELIMITER>")
+        .map_while(|id| str::parse(id).ok())
+        .collect();
     ranking_service
-        .update_ballot_rankings(ballot.id, &ballot_update_data.ranked_item_ids)
+        .update_ballot_rankings(ballot.id, &ranked_item_ids)
         .await?;
-    Ok(HttpResponse::Accepted().finish())
+
+    let best_item = ranking_service.get_instant_runoff_result().await?;
+    let body = BestItemView::new(&best_item).render_once()?;
+    Ok(HttpResponse::Ok().body(body))
 }
