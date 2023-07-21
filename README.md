@@ -19,13 +19,15 @@ No need for serious security and users are allowed to change their rankings.
 
 + Server: [actix-web]
 + Database: [sqlx], [mysql]
-+ Template: [sailfish]
++ Template: [sailfish], [htmx], [alpinejs]
 + Observability: [tracing], [opentelemetry]
 
 [actix-web]: https://github.com/actix/actix-web
 [mysql]: https://www.mysql.com
 [sqlx]: https://github.com/launchbadge/sqlx
 [sailfish]: https://github.com/launchbadge/sqlx
+[htmx]: https://htmx.org/
+[alpinejs]: https://alpinejs.dev/
 [tracing]: https://github.com/tokio-rs/tracing
 [opentelemetry]: https://github.com/open-telemetry/opentelemetry-rust
 
