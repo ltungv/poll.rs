@@ -57,7 +57,7 @@ where
             .wrap(RedirectMiddleware::new(
                 "/ballot",
                 |r: &ServiceRequest| r.get_identity().is_ok(),
-                &[
+                vec![
                     ResourceDef::new("/"),
                     ResourceDef::new("/login"),
                     ResourceDef::new("/register"),
@@ -66,7 +66,7 @@ where
             .wrap(RedirectMiddleware::new(
                 "/",
                 |r: &ServiceRequest| r.get_identity().is_err(),
-                &[ResourceDef::new("/ballot")],
+                vec![ResourceDef::new("/ballot")],
             ))
             .wrap(middleware_flash_message(
                 config.application().flash_message_minimum_level(),

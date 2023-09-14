@@ -10,15 +10,15 @@ use futures::future::{ready, LocalBoxFuture, Ready};
 #[derive(Clone)]
 pub struct RedirectMiddleware<F> {
     redirected_to: &'static str,
-    resources: Rc<Vec<ResourceDef>>,
+    resources: Rc<[ResourceDef]>,
     predicate: Rc<F>,
 }
 
 impl<F> RedirectMiddleware<F> {
-    pub fn new(redirected_to: &'static str, predicate: F, resources: &[ResourceDef]) -> Self {
+    pub fn new(redirected_to: &'static str, predicate: F, resources: Vec<ResourceDef>) -> Self {
         Self {
             redirected_to,
-            resources: Rc::new(resources.to_vec()),
+            resources: Rc::from(resources),
             predicate: Rc::new(predicate),
         }
     }
@@ -50,7 +50,7 @@ where
 pub struct RedirectOnHavingBallotSessionMiddlewareInner<S, F> {
     service: S,
     redirected_to: &'static str,
-    resources: Rc<Vec<ResourceDef>>,
+    resources: Rc<[ResourceDef]>,
     predicate: Rc<F>,
 }
 
