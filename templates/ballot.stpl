@@ -65,8 +65,11 @@
 </body>
 
 <script>
-htmx.onLoad(function() {
-	Sortable.create(document.getElementById('ballot-rankings-container'))
+htmx.onLoad(function(content) {
+	const rankingsContainers = content.querySelectorAll('#ballot-rankings-container');
+	for (const rankingsContainer of rankingsContainers) {
+		Sortable.create(rankingsContainer);
+	}
 })
 </script>
 
