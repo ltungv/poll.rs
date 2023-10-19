@@ -9,8 +9,8 @@ license = "MIT"
 [dependencies]
 actix-cors = "0.6"
 actix-files = "0.6"
-actix-identity = "0.5"
-actix-session = { version = "0.7", features = ["cookie-session"] }
+actix-identity = "0.6"
+actix-session = { version = "0.8", features = ["cookie-session"] }
 actix-web = "4"
 actix-web-flash-messages = { version = "0.4", features = ["cookies"] }
 anyhow = "1"
@@ -18,9 +18,9 @@ async-trait = "0.1"
 clap = { version = "4", features = ["derive"] }
 config = { version = "0.13", features = ["yaml"] }
 futures = "0.3"
-opentelemetry = { version = "0.19", features = ["rt-tokio"] }
-opentelemetry-jaeger = { version = "0.18", features = ["rt-tokio"] }
-sailfish = "0.7"
+opentelemetry = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry-jaeger = { version = "0.19", features = ["rt-tokio"] }
+sailfish = "0.8"
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
@@ -32,6 +32,6 @@ tracing = "0.1"
 tracing-actix-web = { version = "0.7", features = ["opentelemetry_0_19"] }
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
-tracing-opentelemetry = "0.19"
+tracing-opentelemetry = "0.21"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "registry"] }
 uuid = { version = "1", features = ["v4", "serde"] }
