@@ -28,6 +28,12 @@ pub enum RouteError {
     SailfishRender(#[from] sailfish::RenderError),
 
     #[error(transparent)]
+    IdentityLoginError(#[from] actix_identity::error::LoginError),
+
+    #[error(transparent)]
+    IdentityGetError(#[from] actix_identity::error::GetIdentityError),
+
+    #[error(transparent)]
     Service(#[from] service::ServiceError),
 
     #[error(transparent)]
