@@ -1,10 +1,8 @@
-use opentelemetry::{
-    global,
-    sdk::{
-        self,
-        trace::{self, RandomIdGenerator, Sampler},
-    },
-    trace::TraceError,
+use opentelemetry::{trace::TraceError, KeyValue};
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::{
+    trace::{self, RandomIdGenerator, Sampler},
+    Resource,
 };
 use tracing::Subscriber;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
@@ -34,7 +32,7 @@ pub fn setup_tracing(config: &Configuration) -> Result<(), anyhow::Error> {
 
 fn otel_jaeger_tracing_layer<S>(
     config: &TracingConfiguration,
-) -> Result<Option<OpenTelemetryLayer<S, sdk::trace::Tracer>>, TraceError>
+) -> Result<Option<OpenTelemetryLayer<S, opentelemetry_sdk::trace::Tracer>>, TraceError>
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
@@ -42,21 +40,26 @@ where
         None => return Ok(None),
         Some(v) => v,
     };
-    global::set_text_map_propagator(opentelemetry_jaeger::Propagator::new());
-    opentelemetry_jaeger::new_agent_pipeline()
-        .with_endpoint(jaeger_endpoint)
-        .with_service_name(config.service_name())
-        .with_max_packet_size(16_384)
-        .with_auto_split_batch(true)
-        .with_instrumentation_library_tags(false)
-        .with_trace_config(
-            trace::config()
-                .with_sampler(Sampler::AlwaysOn)
-                .with_id_generator(RandomIdGenerator::default())
-                .with_max_events_per_span(64)
-                .with_max_attributes_per_span(16),
-        )
-        .install_batch(opentelemetry::runtime::Tokio)
+
+    let exporter = opentelemetry_otlp::new_exporter()
+        .tonic()
+        .with_endpoint(jaeger_endpoint);
+
+    let trace_config = trace::config()
+        .with_sampler(Sampler::AlwaysOn)
+        .with_id_generator(RandomIdGenerator::default())
+        .with_max_events_per_span(64)
+        .with_max_attributes_per_span(16)
+        .with_resource(Resource::new(vec![KeyValue::new(
+            "service.name",
+            config.service_name().to_string(),
+        )]));
+
+    opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(exporter)
+        .with_trace_config(trace_config)
+        .install_batch(opentelemetry_sdk::runtime::Tokio)
         .map(|t| tracing_opentelemetry::layer().with_tracer(t))
         .map(Some)
 }

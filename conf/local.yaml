@@ -12,4 +12,4 @@ database:
   require_ssl: false
 tracing:
   log_level: debug
-  jaeger_endpoint: localhost:6831
+  jaeger_endpoint: http://localhost:6831
